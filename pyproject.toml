@@ -1,0 +1,17 @@
+[project]
+name = "decision-mcp-server"
+version = "0.1.0"
+description = "An MCP Server enabling integration with IBM Decision Server Runtime to retrieve and invoke decision services."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [ "mcp>=1.12.2","requests"]
+[[project.authors]]
+name = "laurent grateau"
+email = "laurent.grateau@fr.ibm.com"
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.scripts]
+decision-mcp-server = "decision_mcp_server:main"
