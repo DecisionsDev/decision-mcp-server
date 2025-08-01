@@ -6,32 +6,58 @@ from mcp.server import NotificationOptions, Server
 from pydantic import AnyUrl
 import mcp.server.stdio
 import logging
-from .Credentials import Credentials
-from .DecisionServerManager import DecisionServerManager
-
+from decision_mcp_server.Credentials import Credentials
+from decision_mcp_server.DecisionServerManager import DecisionServerManager
+from decision_mcp_server.config import INSTRUCTIONS
 from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 import argparse
+import os
 # Store notes as a simple key-value dict to demonstrate state management
 notes: dict[str, str] = {}
 repository: dict[str,DecisionServiceDescription] = {}
-server = Server("decision-mcp-server")
+
 
 parser = argparse.ArgumentParser(description="Decision MCP Server")
-parser.add_argument("--odm-url", type=str, default="http://localhost:9060/res", help="ODM service URL")
-parser.add_argument("--username", type=str, default="odmAdmin", help="ODM username (optional)")
-parser.add_argument("--password", type=str, default="odmAdmin", help="ODM password (optional)")
+parser.add_argument("--odm-url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
+
+parser.add_argument("--odm-runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
+parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
+parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
+parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
+parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
 args, unknown = parser.parse_known_args()
 
-credentials = Credentials(
-    odm_url=args.odm_url,
-    username=args.username,
-    password=args.password
-)
+args = parser.parse_args()
+if args.zenapikey:  # If zenapikey is provided, use it for authentication
+    credentials = Credentials(
+        odm_url=args.odm_url,
+        odm_url_runtime=args.odm_runtime_url,
+        username=args.username,
+        zenapikey=args.zenapikey
+    )
+elif args.bearertoken:  # If bearer token is provided, use it for authentication
+    credentials = Credentials(
+        odm_url=args.odm_url,
+        odm_url_runtime=args.odm_runtime_url,
+        bearer_token=args.bearertoken
+    )
+else:  # Default to basic authentication if no zenapikey or bearer token is provided
+    if not args.username or not args.password:
+        raise ValueError("Username and password must be provided for basic authentication.")
+    if not args.odm_url:
+        raise ValueError("ODM URL must be provided.")
+    if not args.odm_runtime_url:
+        args.odm_runtime_url = args.odm_url # Default runtime URL to ODM URL if not specified
+    credentials = Credentials( 
+        odm_url=args.odm_url,
+        username=args.username,
+        password=args.password
+    )
 manager = DecisionServerManager(
          credentials=credentials
      )
 
-
+server = Server("decision-mcp-server")
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
     """
@@ -143,25 +169,14 @@ async def handle_call_tool(
     Tools can modify server state and notify clients of changes.
     """
     logging.info("Calling ODM tools")
-#    if name != "vacation":
-#        raise ValueError(f"Unknown tool: {name}")
+    if repostory.get(name)==None:
+        logging.error("Tool not found: %s", name)
+        raise ValueError(f"Unknown tool: {name}")
 
-#    if not arguments:
-#        raise ValueError("Missing arguments")
-
-#    hiring_date = arguments.get("hiringDate")
-  
-#    if not hiring_date :
-#        raise ValueError("Missing hiring_date argument")
-
-    # TODO Implement the ressource logic
-    # Update server state
-#    notes[note_name] = content
 
     # Notify clients that resources have changed
-#   await server.request_context.session.send_resource_list_changed()
+#    await server.request_context.session.send_resource_list_changed()
     logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
-    logging.info("Repository content: %s", repository[name])
     result =  manager.invokeDecisionService(
          rulesetPath=repository[name].rulesetPath,
          decisionInputs=arguments
@@ -182,6 +197,7 @@ async def main():
             InitializationOptions(
                 server_name="decision-mcp-server",
                 server_version="0.1.0",
+                instructions=INSTRUCTIONS,
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
