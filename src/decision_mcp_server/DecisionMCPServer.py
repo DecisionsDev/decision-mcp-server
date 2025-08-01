@@ -169,7 +169,7 @@ async def handle_call_tool(
     Tools can modify server state and notify clients of changes.
     """
     logging.info("Calling ODM tools")
-    if repostory.get(name)==None:
+    if repository.get(name)==None:
         logging.error("Tool not found: %s", name)
         raise ValueError(f"Unknown tool: {name}")
 
@@ -181,6 +181,8 @@ async def handle_call_tool(
          rulesetPath=repository[name].rulesetPath,
          decisionInputs=arguments
      )
+    if result.get("__DecisionID__") is not None:
+         del result["__DecisionID__"]
     return [
         types.TextContent(
             type="text",
