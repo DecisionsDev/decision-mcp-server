@@ -82,12 +82,7 @@ class Credentials:
     def get_session(self):
         """
         Creates and returns a requests Session object configured with SSL settings
-        """
-
-        
-        if self.debug:
-            enable_http_debug()
-            
+        """ 
         session = requests.Session()
         
         if self.odm_url.startswith('https'):

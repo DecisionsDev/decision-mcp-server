@@ -1,5 +1,5 @@
 import asyncio
-
+import json
 from mcp.server.models import InitializationOptions
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
@@ -8,10 +8,12 @@ import mcp.server.stdio
 import logging
 from .Credentials import Credentials
 from .DecisionServerManager import DecisionServerManager
+
+from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 import argparse
 # Store notes as a simple key-value dict to demonstrate state management
 notes: dict[str, str] = {}
-
+repository: dict[str,DecisionServiceDescription] = {}
 server = Server("decision-mcp-server")
 
 parser = argparse.ArgumentParser(description="Decision MCP Server")
@@ -29,6 +31,7 @@ manager = DecisionServerManager(
          credentials=credentials
      )
 
+
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
     """
@@ -36,13 +39,14 @@ async def handle_list_resources() -> list[types.Resource]:
     Each note is exposed as a resource with a custom note:// URI scheme.
     """
     return [
+
         types.Resource(
-            uri=AnyUrl(f"note://internal/{name}"),
-            name=f"Note: {name}",
-            description=f"A simple note named {name}",
+            uri=AnyUrl(f"decisionservice://internal/{name}"),
+            name=f"DecisionService: {name}",
+            description=f"Decision Service: {name}",
             mimeType="text/plain",
         )
-        for name in notes
+        for name in repository.keys()
     ]
 
 @server.read_resource()
@@ -51,16 +55,16 @@ async def handle_read_resource(uri: AnyUrl) -> str:
     Read a specific note's content by its URI.
     The note name is extracted from the URI host component.
     """
-    if uri.scheme != "note":
+    if uri.scheme != "decisionservice":
         raise ValueError(f"Unsupported URI scheme: {uri.scheme}")
 
     name = uri.path
     if name is not None:
         name = name.lstrip("/")
-        return notes[name]
-    raise ValueError(f"Note not found: {name}")
+        return str(repository[name].__dict__)
+    raise ValueError(f"DecisonService not found: {name}")
 
-@server.list_prompts()
+@server.list_prompts()  
 async def handle_list_prompts() -> list[types.Prompt]:
     """
     List available prompts.
@@ -119,19 +123,16 @@ async def handle_list_tools() -> list[types.Tool]:
     """
     logging.info("Listing ODM tools")
     logging.info("Using ODM URL: %s", args.odm_url)
-    return [
-        types.Tool(
-            name="vacation",
-            description="retrieve the number of vacation days per year for a given employee and his hiring date.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "hiringDate": {"type": "string", "description":"The hiring date with this format 'yyyy-mm-dd'"},
-                },
-                "required": ["hiringDate"],
-            },
-        )
-    ]
+
+    rulesets = manager.fetch_rulesets()
+    extractedTools = manager.generate_tools_format(rulesets)
+    tools = []
+    for decisionService in extractedTools:   
+        tool_info = decisionService.toolDescription
+        tools.append(tool_info)
+        repository[decisionService.tool_name]=decisionService
+    return tools
+    
 
 @server.call_tool()
 async def handle_call_tool(
@@ -142,16 +143,16 @@ async def handle_call_tool(
     Tools can modify server state and notify clients of changes.
     """
     logging.info("Calling ODM tools")
-    if name != "vacation":
-        raise ValueError(f"Unknown tool: {name}")
+#    if name != "vacation":
+#        raise ValueError(f"Unknown tool: {name}")
 
-    if not arguments:
-        raise ValueError("Missing arguments")
+#    if not arguments:
+#        raise ValueError("Missing arguments")
 
-    hiring_date = arguments.get("hiringDate")
+#    hiring_date = arguments.get("hiringDate")
   
-    if not hiring_date :
-        raise ValueError("Missing hiring_date argument")
+#    if not hiring_date :
+#        raise ValueError("Missing hiring_date argument")
 
     # TODO Implement the ressource logic
     # Update server state
@@ -159,14 +160,16 @@ async def handle_call_tool(
 
     # Notify clients that resources have changed
 #   await server.request_context.session.send_resource_list_changed()
+    logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
+    logging.info("Repository content: %s", repository[name])
     result =  manager.invokeDecisionService(
-         rulesetPath='/hr_decision_service/1.0/number_of_timeoff_days/1.3',
-         decisionInputs={ "hiringDate": hiring_date}
+         rulesetPath=repository[name].rulesetPath,
+         decisionInputs=arguments
      )
     return [
         types.TextContent(
             type="text",
-            text=result.get('timeoffDays', 'No vacation days found') ,
+            text=json.dumps(result, indent=2, ensure_ascii=False) if isinstance(result, dict) else str(result)
         )
     ]
 

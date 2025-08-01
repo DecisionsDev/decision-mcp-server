@@ -3,8 +3,10 @@ import logging
 import json
 from collections import defaultdict
 import requests
+import yaml
+import jsonref
 from requests.exceptions import RequestException
-
+from .DecisionServiceDescription import DecisionServiceDescription
 class DecisionServerManager:
     """
     :no-index:
@@ -98,13 +100,10 @@ class DecisionServerManager:
             filtered_rulesets = [
             (version, ruleset) for version, ruleset in rulesets
             if any(prop["id"] == "ruleset.status" and prop["value"] == "enabled" for prop in ruleset["properties"])
-             and any(prop["id"] == "tools.parameters" for prop in ruleset["properties"])
+             and any(prop["id"] == "tools.enabled" for prop in ruleset["properties"])
            ]
-
-#           
             if not filtered_rulesets:
                 continue
-
             sorted_rulesets = sorted(filtered_rulesets, key=lambda x: (x[0], x[1]["version"]), reverse=True)
                 # Get the highest version ruleset
             highest_version_ruleset = sorted_rulesets[0][1]
@@ -112,7 +111,85 @@ class DecisionServerManager:
 
         return highest_version_rulesets
     
-    def generate_tools_format(self, filtered_rulesets):
+    def to_plain_dict(self,obj):
+        """
+        Recursively convert a jsonref.JsonRef structure to a plain JSON-serializable dict.
+        """
+        if isinstance(obj, dict):
+            return {k: self.to_plain_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self.to_plain_dict(i) for i in obj]
+        else:
+            return obj
+        
+
+    def get_ruleset_openapi(self, ruleset):
+        """
+        :no-index:
+        Extracts the input schema from a ruleset.
+
+        Args:
+            ruleset (dict): A dictionary representing a ruleset.
+
+        Returns:
+            dict: The input schema of the ruleset.
+        """
+        try:
+                # Make the GET request with headers
+                self.logger.info("Retrieve OpenAPI schema at "+self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi')
+                session = self.credentials.get_session()
+                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', auth=self.auth, headers=self.headers)
+
+
+                # Check if the request was successful
+                if response.status_code == 200:
+                    self.logger.info("Request successful!")
+
+                    # Resolve $ref references
+                    jsonopenApiData = jsonref.JsonRef.replace_refs(json.loads(response.text))
+
+                    # Get the response schema (for 200 response as an example)
+                    # Extract the input 
+                    inputParameterSchema= jsonopenApiData["paths"]["/"+ruleset["id"]]["post"]["requestBody"]["content"]["application/json"]["schema"]
+                    if "properties" in inputParameterSchema and "__DecisionID__" in inputParameterSchema["properties"]:
+                        del inputParameterSchema["properties"]["__DecisionID__"]
+                    # Convert to plain JSON-serializable dict
+                    return self.to_plain_dict(inputParameterSchema)
+                else:
+                    self.logger.error("Request failed with status code: %s", response.status_code)
+                    self.logger.error("Response: %s", response.text)
+
+        except requests.exceptions.RequestException as e:
+                self.logger.error("An error occurred: %s", e)
+        except json.JSONDecodeError:
+                self.logger.error("Failed to decode JSON response.")
+        
+
+    def get_input_schema(self, ruleset):
+
+        """
+        :no-index:
+        Extracts the input schema from a ruleset.
+
+        Args:
+            ruleset (dict): A dictionary representing a ruleset.
+
+        Returns:
+            dict: The input schema of the ruleset.
+        """
+        # Extract tools.parameters
+        tools_parameters = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.parameters"), "[]")
+
+        if tools_parameters is None or tools_parameters == "[]":
+            self.logger.warning(f"No tools.parameters found for ruleset {ruleset['id']} generating the json schema.")
+            return self.get_ruleset_openapi(ruleset)
+        else:
+            return json.loads(tools_parameters)
+    
+
+
+
+    def generate_tools_format(self, filtered_rulesets)-> list[DecisionServiceDescription]:
         """
         :no-index:
         Generates a formatted list of rulesets in the tools format from the filtered rulesets.
@@ -123,28 +200,19 @@ class DecisionServerManager:
         Returns:
             list: A list of formatted rulesets.
         """
-        formatted_rulesets = []
+        formatted_tools = []
 
         for ruleset in filtered_rulesets.values():
-            # Extract tools.parameters
-            tools_parameters = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.parameters"), "[]")
-            args = json.loads(tools_parameters)
 
+            input_schema = self.get_input_schema(ruleset)
             callbackName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.callback"), None)
+            toolName = ruleset["displayName"].replace(" ", "_").lower()
+            # Define a class to hold the formatted ruleset data
+           
 
-            formatted_ruleset = {
-                "engine": "odm",
-                "toolName": ruleset["displayName"],
-                "rulesetProperties": ruleset["properties"],
-                "toolDescription": ruleset["description"],
-                "toolPath": "/"+ruleset["id"],
-                "callbackClassName": callbackName,
-                "args": args,
-                "output": "resultat"
-            }
-            formatted_rulesets.append(formatted_ruleset)
-
-        return formatted_rulesets
+            formatted_ruleset = DecisionServiceDescription(toolName, ruleset, input_schema,callbackName)
+            formatted_tools.append(formatted_ruleset)
+        return formatted_tools
 
     def fetch_rulesets(self):
         """
