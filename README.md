@@ -106,66 +106,83 @@ This should return
 John Doe is entitled to 43 days per year.
 ```
 
+### Installation in Claude Desktop
 
-## Configuration
+#### Prerequisites for Claude Desktop
 
-   * Set your ODM credentials and endpoint in the command line or environment variables. Example:
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- [Rancher Docker](https://rancherdesktop.io/) - [Optional if you will used ODM deployed on Kubernetes]
+- [Claude Desktop ](https://claude.ai/download)
 
-```bash
-uv run decision-mcp-server --odm-url http://your-odm-url/res --username your_user --password your_pass
+#### Check the pre-requisites :
+- Check uv and Python 
+
+```shell
+uv python list
+
+...
+cpython-3.13.3-macos-aarch64-none                   /opt/homebrew/opt/python@3.13/bin/python3.13 -> ../Frameworks/Python.framework/Versions/3.13/bin/python3.13
 ```
 
+- Check docker installation (Optional if you will used ODM deployed on Kubernetes)
+```shell
+docker search ibmcom/odm
 
-   * Register this MCP Server in MCP Client*
+NAME                                                 DESCRIPTION                                     STARS     OFFICIAL
+ibmcom/odm                                           Official IBM Operational Decision Manager fo…   31
+...
+```
 
-   In your ADK configuration, add the MCP server as a tool provider:
+#### Register the MCP Decision Server in Claude Desktop 
+1. Open Claude Desktop Settings
+Start by accessing the Claude Desktop settings. Click on the Claude menu in your system’s menu bar (not the settings within the Claude window itself) and select “Settings…”On macOS, this appears in the top menu bar.
 
-   ```json
-   "mcpServers": {
-     "decision-mcp-server": {
-       "command": "uv",
-       "args": [
-         "--directory",
-         "<PATH_TO>/decision-mcp-server",
-         "run",
-         "decision-mcp-server"
-       ]
-     }
-   }
-   ```
+2. Access Developer Settings
 
-   For published servers, use:
+In the Settings window, navigate to the “Developer” tab in the left sidebar. This section contains options for configuring MCP servers and other developer features.
 
-   ```json
-   "mcpServers": {
-     "decision-mcp-server": {
-       "command": "uvx",
-       "args": [
-         "decision-mcp-server"
-       ]
-     }
-   }
-   ```
+Click the “Edit Config” button to open the configuration file:
+
+<img src="docs/claude-setting-developer.png" alt="Claude Configuration" width="350" height="150">
+
+Developer settings showing Edit Config button
+This action creates a new configuration file if one doesn’t exist, or opens your existing configuration. 
+
+The file is located at:
+
+  *  macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+  *  Windows: %APPDATA%\Claude\claude_desktop_config.json
+
+3. Configure the  `decision-mcp-server` Server
+
+Replace the contents of the configuration file with the following JSON structure. This configuration tells Claude Desktop to start the Decison MCP Server with access:
+
+  ```json
+  {
+    "mcpServers": {
+      "decision-mcp-server": {
+        "command": "uvx",
+        "args": [
+          "--from",
+          "git+https://github.com/DecisionsDev/decision-mcp-server",
+          "decision-mcp-server"
+        ]
+      }
+    }
+  }
+  ```
+
+4. Restart Claude Desktop
+
+
+For more informations on how to extend Claude Desktop with local MCP servers see the [MCP Documentation](https://modelcontextprotocol.io/quickstart/user)
 
 ## Support
 
 For more details on IBM ODM, see [IBM Documentation](https://www.ibm.com/docs/en/odm).
 For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orchestrate.ibm.com/getting_started/installing).
 
-
-### Debugging
-
-Since MCP servers run over stdio, debugging can be challenging. For the best debugging
-experience, we strongly recommend using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
-
-
-You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
-
-```bash
-npx @modelcontextprotocol/inspector uv --directory $PWD/decision-mcp-server run decision-mcp-server
-```
-
-Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
 
 ## ✅ Development Checklist (By Priority)
 
@@ -184,7 +201,7 @@ Upon launching, the Inspector will display a URL that you can access in your bro
 - [ ] **Support multiple Decision Server endpoints**  
       Verify connection when the Decision Server Console and Runtime are hosted on different URLs.
 
-- [ ] **Test and document Claude Desktop integration**  
+- [x] **Test and document Claude Desktop integration**  
       Ensure compatibility with Claude Desktop and provide integration instructions.
 
 - [ ] **Record demo video for Claude Desktop integration**  
