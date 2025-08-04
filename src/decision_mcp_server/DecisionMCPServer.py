@@ -18,9 +18,9 @@ repository: dict[str,DecisionServiceDescription] = {}
 
 
 parser = argparse.ArgumentParser(description="Decision MCP Server")
-parser.add_argument("--odm-url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
+parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
 
-parser.add_argument("--odm-runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
+parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
 parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
 parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
 parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
@@ -30,26 +30,26 @@ args, unknown = parser.parse_known_args()
 args = parser.parse_args()
 if args.zenapikey:  # If zenapikey is provided, use it for authentication
     credentials = Credentials(
-        odm_url=args.odm_url,
-        odm_url_runtime=args.odm_runtime_url,
+        odm_url=args.url,
+        odm_url_runtime=args.runtime_url,
         username=args.username,
         zenapikey=args.zenapikey
     )
 elif args.bearertoken:  # If bearer token is provided, use it for authentication
     credentials = Credentials(
-        odm_url=args.odm_url,
-        odm_url_runtime=args.odm_runtime_url,
+        odm_url=args.url,
+        odm_url_runtime=args.runtime_url,
         bearer_token=args.bearertoken
     )
 else:  # Default to basic authentication if no zenapikey or bearer token is provided
     if not args.username or not args.password:
         raise ValueError("Username and password must be provided for basic authentication.")
-    if not args.odm_url:
+    if not args.url:
         raise ValueError("ODM URL must be provided.")
-    if not args.odm_runtime_url:
-        args.odm_runtime_url = args.odm_url # Default runtime URL to ODM URL if not specified
+    if not args.runtime_url:
+        args.runtime_url = args.url # Default runtime URL to ODM URL if not specified
     credentials = Credentials( 
-        odm_url=args.odm_url,
+        odm_url=args.url,
         username=args.username,
         password=args.password
     )

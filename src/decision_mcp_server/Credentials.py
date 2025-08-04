@@ -61,8 +61,8 @@ class Credentials:
             # Encode the concatenated string in Base64
             encoded_zen_key = base64.b64encode(concatenated_key.encode()).decode()
             return None,{
-                'Authorization': f'ZenApiKey '+encoded_zen_key,
-                'Content-Type': 'application/json; charset=UTF-8',
+                'Authorization': f'ZenApiKey {encoded_zen_key}' ,
+                'Content-Type': 'application/json; charset=UTF-8', 
                 'accept': 'application/json; charset=UTF-8'
             }
         elif self.bearer_token:
@@ -97,5 +97,6 @@ class Credentials:
         if auth:
             session.auth = auth
         session.headers.update(headers)
+        print("Session created with headers:", session.headers)
         
         return session

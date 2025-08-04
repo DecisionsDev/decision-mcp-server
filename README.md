@@ -186,17 +186,11 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 
 ## ✅ Development Checklist (By Priority)
 
-- [ ] **Support configuration via CLI and environment variables**  
+- [x] **Support configuration via CLI and environment variables**  
       Allow configuration of the MCP server (host, port, etc.) through command-line arguments and environment variables.
 
 - [ ] **Verify Zen authentication support**  
       Ensure compatibility with IBM Zen-based authentication flows.
-
-- [ ] **Verify OpenID Connect authentication**  
-      Confirm proper behavior with OIDC identity providers and document setup.
-
-- [ ] **Validate secure connection with certificate-based authentication**  
-      Test mutual TLS authentication using client/server certificates.
 
 - [ ] **Support multiple Decision Server endpoints**  
       Verify connection when the Decision Server Console and Runtime are hosted on different URLs.
@@ -207,8 +201,9 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 - [ ] **Record demo video for Claude Desktop integration**  
       Capture a short video showcasing the MCP server in action with Claude Desktop.
 
-- [ ] **Test and document Cursor AI integration**  
-      Validate Cursor AI compatibility and document the integration process.
+- [x] **Test  Cursor AI integration**  
+
+- [ ] **Document the integration process**
 
 - [ ] **Record demo video for Cursor AI integration**  
       Capture a short walkthrough of Cursor AI usage with the MCP server.
@@ -218,3 +213,6 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 
 - [ ] **Store and expose Decision Trace executions as MCP resources**  
       Persist decision traces and make them available as MCP resources for querying or analysis.
+
+- [ ] **Verify OpenID Connect authentication**  
+      Confirm proper behavior with OIDC identity providers and document setup.
