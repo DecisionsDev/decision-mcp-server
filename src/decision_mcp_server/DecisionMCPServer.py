@@ -25,21 +25,31 @@ parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "o
 parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
 parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
 parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
+parser.add_argument("--verifyssl", type=str,default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+            
+
 args, unknown = parser.parse_known_args()
+verifyssl = True
+if args.verifyssl:
+    if args.verifyssl == "False":
+        verifyssl = False
 
 args = parser.parse_args()
+#logging.info("Parsed arguments: %s", str(args))
 if args.zenapikey:  # If zenapikey is provided, use it for authentication
     credentials = Credentials(
         odm_url=args.url,
         odm_url_runtime=args.runtime_url,
         username=args.username,
-        zenapikey=args.zenapikey
+        zenapikey=args.zenapikey,
+        verify_ssl=verifyssl
     )
 elif args.bearertoken:  # If bearer token is provided, use it for authentication
     credentials = Credentials(
         odm_url=args.url,
         odm_url_runtime=args.runtime_url,
-        bearer_token=args.bearertoken
+        bearer_token=args.bearertoken,
+        verify_ssl=verifyssl
     )
 else:  # Default to basic authentication if no zenapikey or bearer token is provided
     if not args.username or not args.password:
@@ -51,7 +61,8 @@ else:  # Default to basic authentication if no zenapikey or bearer token is prov
     credentials = Credentials( 
         odm_url=args.url,
         username=args.username,
-        password=args.password
+        password=args.password,
+        verify_ssl=verifyssl
     )
 manager = DecisionServerManager(
          credentials=credentials
@@ -148,7 +159,7 @@ async def handle_list_tools() -> list[types.Tool]:
     Each tool specifies its arguments using JSON Schema validation.
     """
     logging.info("Listing ODM tools")
-    logging.info("Using ODM URL: %s", args.odm_url)
+    logging.info("Using ODM URL: %s", args.url)
 
     rulesets = manager.fetch_rulesets()
     extractedTools = manager.generate_tools_format(rulesets)
@@ -191,6 +202,7 @@ async def handle_call_tool(
     ]
 
 async def main():
+    
     # Run the server using stdin/stdout streams
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(

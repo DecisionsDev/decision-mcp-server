@@ -2,6 +2,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 #from validator_collection import  checkers
 import base64
+import logging
 class Credentials:
     """
     A class to handle credentials for accessing an ODM (Operational Decision Manager) service.
@@ -84,7 +85,7 @@ class Credentials:
         Creates and returns a requests Session object configured with SSL settings
         """ 
         session = requests.Session()
-        
+        logging.info("Verify SSL: " + str(self.verify_ssl))
         if self.odm_url.startswith('https'):
             if self.verify_ssl:
                 session.verify = self.ssl_cert_path if self.ssl_cert_path else True
@@ -97,6 +98,7 @@ class Credentials:
         if auth:
             session.auth = auth
         session.headers.update(headers)
-        print("Session created with headers:", session.headers)
+        logging.info(f"Session created with URL: {self.odm_url}, Runtime URL: {self.odm_url_runtime} with headers: {session.headers}")
+#        print("Session created with headers:", session.headers)
         
         return session

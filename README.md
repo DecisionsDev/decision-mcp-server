@@ -17,6 +17,81 @@ The Model Context Protocol (MCP) server acts as a bridge between IBM ODM and mod
 - **Decision Storage**: Demonstrates resource management with a local storage system
 - **Tools**: Add  and invoke ODM decision services as tools
 
+### Configuration of the Decision MCP Server
+
+The Decision MCP Server can be configured using command-line options or environment variables.  
+**All configuration parameters can be set via CLI arguments or environment variables**—CLI arguments take precedence.
+
+#### Supported Authentication Methods
+
+Depending on your IBM ODM deployment, you may need to use different authentication methods:
+
+##### 1. **ODM on Cloud Pak for Business Automation**
+- **Authentication:** Zen API Key (recommended)
+- **How to configure:**  
+  - CLI: `--zenapikey <your-zen-api-key>`
+  - Env: `ZENAPIKEY=<your-zen-api-key>`
+- **Example:**
+  ```bash
+  uv run decision-mcp-server --url=https://<cpd-odm-url>/odm/res --zenapikey=<your-zen-api-key>
+  ```
+
+##### 2. **ODM on Certified Kubernetes**
+- **Authentication:** Basic Auth (username/password) or OpenID Connect (Bearer token)
+- **How to configure:**  
+  - Basic Auth:
+    - CLI: `--username <user> --password <pass>`
+    - Env: `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
+  - OpenID Connect:
+    - CLI: `--bearertoken <token>`
+    - Env: `BEARER=<token>`
+- **Example (Basic Auth):**
+  ```bash
+  uv run decision-mcp-server --url=http://<odm-k8s-url>/res --username=odmAdmin --password=odmAdmin
+  ```
+- **Example (OIDC):**
+  ```bash
+  uv run decision-mcp-server --url=http://<odm-k8s-url>/res --bearertoken=<your-oidc-token>
+  ```
+
+##### 3. **ODM for Developers (Docker/Local)**
+- **Authentication:** Basic Auth (username/password)
+- **How to configure:**  
+  - CLI: `--username <user> --password <pass>`
+  - Env: `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
+- **Example:**
+  ```bash
+  uvx run decision-mcp-server --url=http://localhost:9060/res --username=odmAdmin --password=odmAdmin
+  ```
+
+> **Tip:** You can mix CLI arguments and environment variables as needed. CLI arguments always take precedence.
+
+---
+
+#### Parameters Table
+
+| CLI Argument      | Environment Variable | Description                                                                                   | Default                                 |
+|-------------------|---------------------|-----------------------------------------------------------------------------------------------|-----------------------------------------|
+| `--url`       | `ODM_URL`           | ODM service URL                                                                               | `http://localhost:9060/res`             |
+| `--runtime-url`   | `ODM_RUNTIME_URL`   | ODM runtime service URL                                                                       | `http://localhost:9060/DecisionService` |
+| `--username`      | `ODM_USERNAME`      | ODM username for basic authentication                                                         | `odmAdmin`                              |
+| `--password`      | `ODM_PASSWORD`      | ODM password for basic authentication                                                         | `odmAdmin`                              |
+| `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication (Cloud Pak for Business Automation)                                           |                                         |
+| `--bearertoken`   | `BEARER`            | OpenID Bearer token for authentication (Kubernetes)                                           |                                         |
+| `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                        | `True`                                  |
+
+---
+
+#### ODM Offering & Authentication Summary
+
+| ODM Offering                | Authentication Method(s)        | CLI/Env Example(s)                                      |
+|-----------------------------|---------------------------------|---------------------------------------------------------|
+| Cloud Pak for Business Automation          | Zen API Key                     | `--zenapikey` / `ZENAPIKEY`                             |
+| Kubernetes                  | Basic Auth, OpenID Connect      | `--username`, `--password`, `--bearertoken` / `ODM_USERNAME`, `ODM_PASSWORD`, `BEARER` |
+| Developer (Docker/Local)    | Basic Auth                      | `--username`, `--password` / `ODM_USERNAME`, `ODM_PASSWORD` |
+
+---
+
 ## Quickstart
 
 ### Prerequisites
@@ -60,7 +135,7 @@ docker run -e LICENSE=accept --network wxo-server -p 9060:9060 -p 9443:9443 --na
 
   Use the Waston orchestrate command line 
 ```bash
-orchestrate toolkits import  --kind mcp  --name DecisionServer --description "A MCP IBM Decision Server" --package-root $PWD  --command "uv run decision-mcp-server --odm-url=http://odm:9060/res"
+orchestrate toolkits import  --kind mcp  --name DecisionServer --description "A MCP IBM Decision Server" --package-root $PWD  --command "uv run decision-mcp-server --url=http://odm:9060/res"
 ```
 This should return something like that
 ```
@@ -176,8 +251,6 @@ Replace the contents of the configuration file with the following JSON structure
 4. Restart Claude Desktop
 
 
-For more informations on how to extend Claude Desktop with local MCP servers see the [MCP Documentation](https://modelcontextprotocol.io/quickstart/user)
-
 ## Support
 
 For more details on IBM ODM, see [IBM Documentation](https://www.ibm.com/docs/en/odm).
@@ -213,6 +286,9 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 
 - [ ] **Store and expose Decision Trace executions as MCP resources**  
       Persist decision traces and make them available as MCP resources for querying or analysis.
+
+- [ ] **Expose a tool to explain decision**
+      Write a tool that extract rules from DC and explain the decision base on the trace.
 
 - [ ] **Verify OpenID Connect authentication**  
       Confirm proper behavior with OIDC identity providers and document setup.
