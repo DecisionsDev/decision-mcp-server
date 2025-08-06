@@ -287,6 +287,18 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 - [ ] **Store and expose Decision Trace executions as MCP resources**  
       Persist decision traces and make them available as MCP resources for querying or analysis.
 
+- [ ] **Put in place Github action for testing**  
+
+- [ ] **Put in place Github action for detect-secrets**
+
+- [ ] **Declare Structured Output**  
+      Schema is extracted and declare in the tool for inputparameters. The work here is to declare the outputparameter to
+      help for a better response.
+
+- [ ] **Verify OpenID Connect authentication**  
+      Confirm proper behavior with OIDC identity providers and document setup.
+
+
 - [ ] **Expose a tool to explain decision**
       Write a tool that extract rules from DC and explain the decision base on the trace.
 

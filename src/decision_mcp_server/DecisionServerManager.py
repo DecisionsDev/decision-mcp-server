@@ -64,7 +64,7 @@ class DecisionServerManager:
 
         # Initialize with provided credentials
         self.credentials = credentials
-        self.auth, self.headers = self.credentials.get_auth()
+        self.headers = self.credentials.get_auth()
         self.trace={ 
             "__TraceFilter__": {
                 "none": True,
@@ -138,7 +138,7 @@ class DecisionServerManager:
                 # Make the GET request with headers
                 self.logger.info("Retrieve OpenAPI schema at "+self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi')
                 session = self.credentials.get_session()
-                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', auth=self.auth, headers=self.headers)
+                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=self.headers)
 
 
                 # Check if the request was successful
@@ -208,8 +208,6 @@ class DecisionServerManager:
             callbackName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.callback"), None)
             toolName = ruleset["displayName"].replace(" ", "_").lower()
             # Define a class to hold the formatted ruleset data
-           
-
             formatted_ruleset = DecisionServiceDescription(toolName, ruleset, input_schema,callbackName)
             formatted_tools.append(formatted_ruleset)
         return formatted_tools
@@ -226,7 +224,7 @@ class DecisionServerManager:
             # Make the GET request with headers
             self.logger.info(self.credentials.odm_url+'/api/v1/ruleapps')
             session = self.credentials.get_session()
-            response = session.get(self.credentials.odm_url+'/api/v1/ruleapps', auth=self.auth, headers=self.headers)
+            response = session.get(self.credentials.odm_url+'/api/v1/ruleapps', headers=self.headers)
 
             # Check if the request was successful
             if response.status_code == 200:
@@ -267,7 +265,7 @@ class DecisionServerManager:
         try:
             session = self.credentials.get_session()
             response = session.post(self.credentials.odm_url_runtime+'/rest'+rulesetPath, headers=headers,
-                                    json=params, auth=self.auth)
+                                    json=params)
 
             # check response
             if response.status_code == 200:

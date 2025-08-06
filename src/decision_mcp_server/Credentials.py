@@ -1,6 +1,5 @@
 import requests
-from requests.auth import HTTPBasicAuth
-#from validator_collection import  checkers
+from validator_collection import  checkers
 import base64
 import logging
 class Credentials:
@@ -45,8 +44,8 @@ class Credentials:
                 # Check if the URL ends with 'res' and replace it with 'DecisionService'
             if self.odm_url_runtime.endswith('res'):
                 self.odm_url_runtime=self.odm_url_runtime[:-3] + 'DecisionService'
-#        if not checkers.is_url(self.odm_url):
-#            raise ValueError("'"+self.odm_url+"' is not a valid URL")
+        if not checkers.is_url(self.odm_url):
+            raise ValueError("'"+self.odm_url+"' is not a valid URL")
         self.username = username
         self.password = password
         self.bearer_token = bearer_token
@@ -60,8 +59,10 @@ class Credentials:
             # Concatenate the strings with a colon
             concatenated_key = f"{self.username}:{self.zenapikey}"
             # Encode the concatenated string in Base64
+            if not self.username:
+                raise ValueError("Username must be provided when using zenapikey.")
             encoded_zen_key = base64.b64encode(concatenated_key.encode()).decode()
-            return None,{
+            return {
                 'Authorization': f'ZenApiKey {encoded_zen_key}' ,
                 'Content-Type': 'application/json; charset=UTF-8', 
                 'accept': 'application/json; charset=UTF-8'
@@ -73,7 +74,10 @@ class Credentials:
                 'accept': 'application/json; charset=UTF-8'
             }
         elif self.username and self.password:
-            return HTTPBasicAuth(self.username, self.password), {
+            concatenated_key = f"{self.username}:{self.password}"
+            encoded_user_cred = base64.b64encode(concatenated_key.encode()).decode()
+            return { 
+                'Authorization': f'Basic {encoded_user_cred}',
                 'Content-Type': 'application/json; charset=UTF-8',
                 'accept': 'application/json; charset=UTF-8'
             }
@@ -94,9 +98,8 @@ class Credentials:
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 session.verify = False
         
-        auth, headers = self.get_auth()
-        if auth:
-            session.auth = auth
+        headers = self.get_auth()
+
         session.headers.update(headers)
         logging.info(f"Session created with URL: {self.odm_url}, Runtime URL: {self.odm_url_runtime} with headers: {session.headers}")
 #        print("Session created with headers:", session.headers)

@@ -165,7 +165,7 @@ async def handle_list_tools() -> list[types.Tool]:
     extractedTools = manager.generate_tools_format(rulesets)
     tools = []
     for decisionService in extractedTools:   
-        tool_info = decisionService.toolDescription
+        tool_info = decisionService.tool_description
         tools.append(tool_info)
         repository[decisionService.tool_name]=decisionService
     return tools

@@ -29,6 +29,7 @@ jobs:
 
     - name: Run tests
       run: |
+        ls -la tests
         uv run pytest
 
 #    - name: Generate documentation
