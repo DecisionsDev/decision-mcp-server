@@ -1,6 +1,6 @@
 [project]
 name = "decision-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "An MCP Server enabling integration with IBM Decision Server Runtime to retrieve and invoke decision services."
 readme = "README.md"
 requires-python = ">=3.13"
