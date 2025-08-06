@@ -31,10 +31,11 @@ jobs:
         ls -la tests
         uv run pytest --html=test-results/report.html --self-contained-html
 
-    - name: Upload test results
+    - name: Upload test results report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pytest-results
-        path: test-results
-        retention-days: 30
+        path: test-results/
+        retention-days: 7
+        if-no-files-found: error
