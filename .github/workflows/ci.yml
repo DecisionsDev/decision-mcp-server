@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies for testing and documentation
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        
+
+    - name: Run tests
+      run: |
+        uv run pytest
+
+#    - name: Generate documentation
+#      run: |
+#        cd docs
+#        make html
+#      continue-on-error: true
+
+    # - name: Upload documentation
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: documentation
+    #     path: docs/_build/html
