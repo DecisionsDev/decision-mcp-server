@@ -24,22 +24,17 @@ jobs:
     - name: Install dependencies for testing and documentation
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv add --dev pytest
-        
+        uv add --dev pytest pytest-html
 
     - name: Run tests
       run: |
         ls -la tests
-        uv run pytest
+        uv run pytest --html=test-results/report.html --self-contained-html
 
-#    - name: Generate documentation
-#      run: |
-#        cd docs
-#        make html
-#      continue-on-error: true
-
-    # - name: Upload documentation
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: documentation
-    #     path: docs/_build/html
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-results
+        path: test-results
+        retention-days: 30

@@ -6,7 +6,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../'
 
 import pytest
 from validator_collection import checkers
-from decision_mcp_server.Credentials import Credentials  # Replace 'your_module' with the actual module name
+from decision_mcp_server.Credentials import Credentials
+
+def get_test_credentials():
+    return Credentials(
+        odm_url="http://localhost:9060/res",
+        username="test_user",
+        password="test_pass"
+    )
 
 def test_valid_url():
     # Test with a valid URL

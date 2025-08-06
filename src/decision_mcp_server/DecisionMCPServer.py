@@ -9,212 +9,180 @@ import logging
 from decision_mcp_server.Credentials import Credentials
 from decision_mcp_server.DecisionServerManager import DecisionServerManager
 from decision_mcp_server.config import INSTRUCTIONS
-from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 import argparse
 import os
-# Store notes as a simple key-value dict to demonstrate state management
-notes: dict[str, str] = {}
-repository: dict[str,DecisionServiceDescription] = {}
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Decision MCP Server")
+    parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
 
-parser = argparse.ArgumentParser(description="Decision MCP Server")
-parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
-
-parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
-parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
-parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
-parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
-parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
-parser.add_argument("--verifyssl", type=str,default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
+    parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
+    parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
+    parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
+    parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
+    parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
             
 
-args, unknown = parser.parse_known_args()
-verifyssl = True
-if args.verifyssl:
-    if args.verifyssl == "False":
-        verifyssl = False
+    return parser.parse_args()
 
-args = parser.parse_args()
-#logging.info("Parsed arguments: %s", str(args))
-if args.zenapikey:  # If zenapikey is provided, use it for authentication
-    credentials = Credentials(
-        odm_url=args.url,
-        odm_url_runtime=args.runtime_url,
-        username=args.username,
-        zenapikey=args.zenapikey,
-        verify_ssl=verifyssl
-    )
-elif args.bearertoken:  # If bearer token is provided, use it for authentication
-    credentials = Credentials(
-        odm_url=args.url,
-        odm_url_runtime=args.runtime_url,
-        bearer_token=args.bearertoken,
-        verify_ssl=verifyssl
-    )
-else:  # Default to basic authentication if no zenapikey or bearer token is provided
-    if not args.username or not args.password:
-        raise ValueError("Username and password must be provided for basic authentication.")
-    if not args.url:
-        raise ValueError("ODM URL must be provided.")
-    if not args.runtime_url:
-        args.runtime_url = args.url # Default runtime URL to ODM URL if not specified
-    credentials = Credentials( 
-        odm_url=args.url,
-        username=args.username,
-        password=args.password,
-        verify_ssl=verifyssl
-    )
-manager = DecisionServerManager(
-         credentials=credentials
-     )
-
-server = Server("decision-mcp-server")
-@server.list_resources()
-async def handle_list_resources() -> list[types.Resource]:
-    """
-    List available note resources.
-    Each note is exposed as a resource with a custom note:// URI scheme.
-    """
-    return [
-
-        types.Resource(
-            uri=AnyUrl(f"decisionservice://internal/{name}"),
-            name=f"DecisionService: {name}",
-            description=f"Decision Service: {name}",
-            mimeType="text/plain",
+def create_credentials(args):
+    verifyssl = args.verifyssl != "False"
+    
+    if args.zenapikey:  # If zenapikey is provided, use it for authentication
+        return Credentials(
+            odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
+            username=args.username,
+            zenapikey=args.zenapikey,
+            verify_ssl=verifyssl
         )
-        for name in repository.keys()
-    ]
-
-@server.read_resource()
-async def handle_read_resource(uri: AnyUrl) -> str:
-    """
-    Read a specific note's content by its URI.
-    The note name is extracted from the URI host component.
-    """
-    if uri.scheme != "decisionservice":
-        raise ValueError(f"Unsupported URI scheme: {uri.scheme}")
-
-    name = uri.path
-    if name is not None:
-        name = name.lstrip("/")
-        return str(repository[name].__dict__)
-    raise ValueError(f"DecisonService not found: {name}")
-
-@server.list_prompts()  
-async def handle_list_prompts() -> list[types.Prompt]:
-    """
-    List available prompts.
-    Each prompt can have optional arguments to customize its behavior.
-    """
-    return [
-        types.Prompt(
-            name="summarize-notes",
-            description="Creates a summary of all notes",
-            arguments=[
-                types.PromptArgument(
-                    name="style",
-                    description="Style of the summary (brief/detailed)",
-                    required=False,
-                )
-            ],
+    elif args.bearertoken:  # If bearer token is provided, use it for authentication
+        return Credentials(
+            odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
+            bearer_token=args.bearertoken,
+            verify_ssl=verifyssl
         )
-    ]
+    else:  # Default to basic authentication if no zenapikey or bearer token is provided
+        if not args.username or not args.password:
+            raise ValueError("Username and password must be provided for basic authentication.")
+        return Credentials( 
+            odm_url=args.url,
+            username=args.username,
+            password=args.password,
+            verify_ssl=verifyssl
+        )
+class DecisionMCPServer:
+    def __init__(self,credentials: Credentials):
+        self.notes: dict[str, str] = {}
+        self.repository: dict[str, DecisionServiceDescription] = {}
+        self.server = Server("decision-mcp-server")
+        self.manager = None,
+        self.credentials = credentials
+        
 
-@server.get_prompt()
-async def handle_get_prompt(
-    name: str, arguments: dict[str, str] | None
-) -> types.GetPromptResult:
-    """
-    Generate a prompt by combining arguments with server state.
-    The prompt includes all current notes and can be customized via arguments.
-    """
-    if name != "summarize-notes":
-        raise ValueError(f"Unknown prompt: {name}")
+    async def list_resources(self) -> list[types.Resource]:
+        return [
+            types.Resource(
+                uri=AnyUrl(f"decisionservice://internal/{name}"),
+                name=f"DecisionService: {name}",
+                description=f"Decision Service: {name}",
+                mimeType="text/plain",
+            )
+            for name in self.repository.keys()
+        ]
 
-    style = (arguments or {}).get("style", "brief")
-    detail_prompt = " Give extensive details." if style == "detailed" else ""
+    async def read_resource(self, uri: AnyUrl) -> str:
+        if uri.scheme != "decisionservice":
+            raise ValueError(f"Unsupported URI scheme: {uri.scheme}")
 
-    return types.GetPromptResult(
-        description="Summarize the current notes",
-        messages=[
-            types.PromptMessage(
-                role="user",
-                content=types.TextContent(
-                    type="text",
-                    text=f"Here are the current notes to summarize:{detail_prompt}\n\n"
-                    + "\n".join(
-                        f"- {name}: {content}"
-                        for name, content in notes.items()
+        name = uri.path
+        if name is not None:
+            name = name.lstrip("/")
+            return str(self.repository[name].__dict__)
+        raise ValueError(f"DecisionService not found: {name}")
+
+    async def list_tools(self) -> list[types.Tool]:
+        logging.info("Listing ODM tools")
+        rulesets = self.manager.fetch_rulesets()
+        extractedTools = self.manager.generate_tools_format(rulesets)
+        tools = []
+        for decisionService in extractedTools:   
+            tool_info = decisionService.tool_description
+            tools.append(tool_info)
+            self.repository[decisionService.tool_name] = decisionService
+        return tools
+
+    async def call_tool(self, name: str, arguments: dict | None) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+        if self.repository.get(name) is None:
+            logging.error("Tool not found: %s", name)
+            raise ValueError(f"Unknown tool: {name}")
+
+        logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
+        result = self.manager.invokeDecisionService(
+            rulesetPath=self.repository[name].rulesetPath,
+            decisionInputs=arguments
+        )
+        if result.get("__DecisionID__") is not None:
+            del result["__DecisionID__"]
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(result, indent=2, ensure_ascii=False) if isinstance(result, dict) else str(result)
+            )
+        ]
+
+    async def start(self):
+
+        self.manager = DecisionServerManager(credentials=self.credentials)
+
+        # Register handlers
+        self.server.list_resources()(self.list_resources)
+        self.server.read_resource()(self.read_resource)
+        self.server.list_tools()(self.list_tools)
+        self.server.call_tool()(self.call_tool)
+
+        # Run the server using stdin/stdout streams
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            await self.server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="decision-mcp-server",
+                    server_version="0.2.0",
+                    instructions=INSTRUCTIONS,
+                    capabilities=self.server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
                     ),
                 ),
             )
-        ],
-    )
 
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    """
-    List available tools.
-    Each tool specifies its arguments using JSON Schema validation.
-    """
-    logging.info("Listing ODM tools")
-    logging.info("Using ODM URL: %s", args.url)
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Decision MCP Server")
+    parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
 
-    rulesets = manager.fetch_rulesets()
-    extractedTools = manager.generate_tools_format(rulesets)
-    tools = []
-    for decisionService in extractedTools:   
-        tool_info = decisionService.tool_description
-        tools.append(tool_info)
-        repository[decisionService.tool_name]=decisionService
-    return tools
+    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
+    parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
+    parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
+    parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
+    parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
+    parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+            
+
+    return parser.parse_args()
+
+def create_credentials(args):
+    verifyssl = args.verifyssl != "False"
     
-
-@server.call_tool()
-async def handle_call_tool(
-    name: str, arguments: dict | None
-) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-    """
-    Handle tool execution requests.
-    Tools can modify server state and notify clients of changes.
-    """
-    logging.info("Calling ODM tools")
-    if repository.get(name)==None:
-        logging.error("Tool not found: %s", name)
-        raise ValueError(f"Unknown tool: {name}")
-
-
-    # Notify clients that resources have changed
-#    await server.request_context.session.send_resource_list_changed()
-    logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
-    result =  manager.invokeDecisionService(
-         rulesetPath=repository[name].rulesetPath,
-         decisionInputs=arguments
-     )
-    if result.get("__DecisionID__") is not None:
-         del result["__DecisionID__"]
-    return [
-        types.TextContent(
-            type="text",
-            text=json.dumps(result, indent=2, ensure_ascii=False) if isinstance(result, dict) else str(result)
+    if args.zenapikey:  # If zenapikey is provided, use it for authentication
+        return Credentials(
+            odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
+            username=args.username,
+            zenapikey=args.zenapikey,
+            verify_ssl=verifyssl
         )
-    ]
-
+    elif args.bearertoken:  # If bearer token is provided, use it for authentication
+        return Credentials(
+            odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
+            bearer_token=args.bearertoken,
+            verify_ssl=verifyssl
+        )
+    else:  # Default to basic authentication if no zenapikey or bearer token is provided
+        if not args.username or not args.password:
+            raise ValueError("Username and password must be provided for basic authentication.")
+        return Credentials( 
+            odm_url=args.url,
+            username=args.username,
+            password=args.password,
+            verify_ssl=verifyssl
+        )
 async def main():
-    
-    # Run the server using stdin/stdout streams
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="decision-mcp-server",
-                server_version="0.2.0",
-                instructions=INSTRUCTIONS,
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
-            ),
-        )
+    """Main entry point for the Decision MCP Server."""
+    args = parse_arguments()
+    credentials = create_credentials(args)
+    server = DecisionMCPServer(credentials=credentials)
+    await server.start()
