@@ -38,12 +38,15 @@ class Credentials:
 
         self.odm_url=odm_url.rstrip('/') 
         if odm_url_runtime is not None:
+           logging.info("Using provided runtime URL: " + odm_url_runtime)
            self.odm_url_runtime=odm_url_runtime.rstrip('/')  
         else:
+
             self.odm_url_runtime=self.odm_url
                 # Check if the URL ends with 'res' and replace it with 'DecisionService'
             if self.odm_url_runtime.endswith('res'):
                 self.odm_url_runtime=self.odm_url_runtime[:-3] + 'DecisionService'
+            logging.info("No runtime URL provided, using odm_url as root runtime URL."+self.odm_url_runtime)
         if not checkers.is_url(self.odm_url):
             raise ValueError("'"+self.odm_url+"' is not a valid URL")
         self.username = username

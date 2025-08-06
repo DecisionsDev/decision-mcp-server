@@ -262,10 +262,10 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 - [x] **Support configuration via CLI and environment variables**  
       Allow configuration of the MCP server (host, port, etc.) through command-line arguments and environment variables.
 
-- [ ] **Verify Zen authentication support**  
+- [x] **Verify Zen authentication support**  
       Ensure compatibility with IBM Zen-based authentication flows.
 
-- [ ] **Support multiple Decision Server endpoints**  
+- [x] **Support multiple Decision Server endpoints**  
       Verify connection when the Decision Server Console and Runtime are hosted on different URLs.
 
 - [x] **Test and document Claude Desktop integration**  
@@ -287,7 +287,7 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 - [ ] **Store and expose Decision Trace executions as MCP resources**  
       Persist decision traces and make them available as MCP resources for querying or analysis.
 
-- [ ] **Put in place Github action for testing**  
+- [x] **Put in place Github action for testing**  
 
 - [ ] **Put in place Github action for detect-secrets**
 
@@ -297,7 +297,6 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 
 - [ ] **Verify OpenID Connect authentication**  
       Confirm proper behavior with OIDC identity providers and document setup.
-
 
 - [ ] **Expose a tool to explain decision**
       Write a tool that extract rules from DC and explain the decision base on the trace.

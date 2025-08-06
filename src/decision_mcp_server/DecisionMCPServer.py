@@ -12,47 +12,6 @@ from decision_mcp_server.config import INSTRUCTIONS
 import argparse
 import os
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description="Decision MCP Server")
-    parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
-
-    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
-    parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
-    parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
-    parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
-    parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
-    parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
-            
-
-    return parser.parse_args()
-
-def create_credentials(args):
-    verifyssl = args.verifyssl != "False"
-    
-    if args.zenapikey:  # If zenapikey is provided, use it for authentication
-        return Credentials(
-            odm_url=args.url,
-            odm_url_runtime=args.runtime_url,
-            username=args.username,
-            zenapikey=args.zenapikey,
-            verify_ssl=verifyssl
-        )
-    elif args.bearertoken:  # If bearer token is provided, use it for authentication
-        return Credentials(
-            odm_url=args.url,
-            odm_url_runtime=args.runtime_url,
-            bearer_token=args.bearertoken,
-            verify_ssl=verifyssl
-        )
-    else:  # Default to basic authentication if no zenapikey or bearer token is provided
-        if not args.username or not args.password:
-            raise ValueError("Username and password must be provided for basic authentication.")
-        return Credentials( 
-            odm_url=args.url,
-            username=args.username,
-            password=args.password,
-            verify_ssl=verifyssl
-        )
 class DecisionMCPServer:
     def __init__(self,credentials: Credentials):
         self.notes: dict[str, str] = {}
@@ -143,7 +102,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Decision MCP Server")
     parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
 
-    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL", "http://localhost:9060/DecisionService"), help="ODM service URL")
+    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL"), help="ODM service URL")
     parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
     parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
     parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
