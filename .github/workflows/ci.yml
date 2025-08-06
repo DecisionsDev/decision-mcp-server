@@ -14,28 +14,19 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
     - name: Install dependencies for testing and documentation
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv add --dev pytest pytest-html
+        uv add --dev pytest pytest-html pytest-github-actions-annotate-failures
 
     - name: Run tests
       run: |
-        ls -la tests
-        uv run pytest --html=test-results/report.html --self-contained-html
-
-    - name: Upload test results report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: pytest-results
-        path: test-results/
-        retention-days: 7
-        if-no-files-found: error
+        mkdir -p test-results
+        uv run pytest -v --durations=0 --html=test-results/report.html --self-contained-html
