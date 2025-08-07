@@ -300,5 +300,3 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
 - [ ] **Expose a tool to explain decision**
       Write a tool that extract rules from DC and explain the decision base on the trace.
 
-- [ ] **Verify OpenID Connect authentication**  
-      Confirm proper behavior with OIDC identity providers and document setup.

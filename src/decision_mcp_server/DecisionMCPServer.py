@@ -123,7 +123,7 @@ def parse_arguments():
 
 def create_credentials(args):
     verifyssl = args.verifyssl != "False"
-    
+
     if args.zenapikey:  # If zenapikey is provided, use it for authentication
         return Credentials(
             odm_url=args.url,
@@ -132,18 +132,18 @@ def create_credentials(args):
             zenapikey=args.zenapikey,
             verify_ssl=verifyssl
         )
-    elif args.client_id:  # If bearer token is provided, use it for authentication
+    elif args.client_id:  # If OpenID credentials are provided, use them for authentication
         return Credentials(
             odm_url=args.url,
             odm_url_runtime=args.runtime_url,
             client_id=args.client_id,
-            client_secrets=args.client_secret,
+            client_secret=args.client_secret,  # Changed from client_secrets to client_secret
             verify_ssl=verifyssl
         )
-    else:  # Default to basic authentication if no zenapikey or bearer token is provided
+    else:  # Default to basic authentication
         if not args.username or not args.password:
             raise ValueError("Username and password must be provided for basic authentication.")
-        return Credentials( 
+        return Credentials(
             odm_url=args.url,
             username=args.username,
             password=args.password,
