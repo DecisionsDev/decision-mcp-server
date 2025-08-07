@@ -40,7 +40,7 @@ Since MCP servers run over stdio, debugging can be challenging. For the best deb
 You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
 
 ```bash
-npx @modelcontextprotocol/inspector uv --directory /Users/laurentgrateau/Work/product/proto/llm/wo/decision-mcp-server run decision-mcp-server
+npx @modelcontextprotocol/inspector uv --from git+https://github.com/DecisionsDev/decision-mcp-server run decision-mcp-server
 ```
 
 Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
