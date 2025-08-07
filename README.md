@@ -43,15 +43,15 @@ Depending on your IBM ODM deployment, you may need to use different authenticati
     - CLI: `--username <user> --password <pass>`
     - Env: `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
   - OpenID Connect:
-    - CLI: `--bearertoken <token>`
-    - Env: `BEARER=<token>`
+    - CLI: `--client_id <CLIENT_ID> --client_secret <CLIENT_SECRET>`
+    - Env: `CLIENT_ID=<token> CLIENT_SECRETS=CLIENT_SECRET`
 - **Example (Basic Auth):**
   ```bash
   uv run decision-mcp-server --url=http://<odm-k8s-url>/res --username=odmAdmin --password=odmAdmin
   ```
 - **Example (OIDC):**
   ```bash
-  uv run decision-mcp-server --url=http://<odm-k8s-url>/res --bearertoken=<your-oidc-token>
+  uv run decision-mcp-server --url=http://<odm-k8s-url>/res --client_id=<your-oidc-clientid> --client_secrets <your-oidc-clientsecret>
   ```
 
 ##### 3. **ODM for Developers (Docker/Local)**
@@ -77,7 +77,8 @@ Depending on your IBM ODM deployment, you may need to use different authenticati
 | `--username`      | `ODM_USERNAME`      | ODM username for basic authentication                                                         | `odmAdmin`                              |
 | `--password`      | `ODM_PASSWORD`      | ODM password for basic authentication                                                         | `odmAdmin`                              |
 | `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication (Cloud Pak for Business Automation)                                           |                                         |
-| `--bearertoken`   | `BEARER`            | OpenID Bearer token for authentication (Kubernetes)                                           |                                         |
+| `--client_id`   | `CLIENT_ID`            | OpenID client ID for authentication (Kubernetes)                                           |                                         |
+| `--client_secret`   | `CLIENT_SECRET`            | OpenID client secret for authentication (Kubernetes)                                           |                                         |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                        | `True`                                  |
 
 ---
@@ -87,7 +88,7 @@ Depending on your IBM ODM deployment, you may need to use different authenticati
 | ODM Offering                | Authentication Method(s)        | CLI/Env Example(s)                                      |
 |-----------------------------|---------------------------------|---------------------------------------------------------|
 | Cloud Pak for Business Automation          | Zen API Key                     | `--zenapikey` / `ZENAPIKEY`                             |
-| Kubernetes                  | Basic Auth, OpenID Connect      | `--username`, `--password`, `--bearertoken` / `ODM_USERNAME`, `ODM_PASSWORD`, `BEARER` |
+| Kubernetes                  | Basic Auth, OpenID Connect      | `--username`, `--password`, `--client_id`, `--client_secret` / `ODM_USERNAME`, `ODM_PASSWORD`, `CLIENT_ID`, `CLIENT_SECRET` |
 | Developer (Docker/Local)    | Basic Auth                      | `--username`, `--password` / `ODM_USERNAME`, `ODM_PASSWORD` |
 
 ---
@@ -275,8 +276,6 @@ For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orche
       Capture a short video showcasing the MCP server in action with Claude Desktop.
 
 - [x] **Test  Cursor AI integration**  
-
-- [ ] **Document the integration process**
 
 - [ ] **Record demo video for Cursor AI integration**  
       Capture a short walkthrough of Cursor AI usage with the MCP server.

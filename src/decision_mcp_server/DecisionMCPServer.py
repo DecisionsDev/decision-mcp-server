@@ -106,7 +106,8 @@ def parse_arguments():
     parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
     parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
     parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
-    parser.add_argument("--bearertoken", type=str, default=os.getenv("BEARER"), help="OpenID Bearer token (optional)")
+    parser.add_argument("--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
+    parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
             
 
@@ -123,11 +124,12 @@ def create_credentials(args):
             zenapikey=args.zenapikey,
             verify_ssl=verifyssl
         )
-    elif args.bearertoken:  # If bearer token is provided, use it for authentication
+    elif args.client_id:  # If bearer token is provided, use it for authentication
         return Credentials(
             odm_url=args.url,
             odm_url_runtime=args.runtime_url,
-            bearer_token=args.bearertoken,
+            client_id=args.client_id,
+            client_secrets=args.client_secret,
             verify_ssl=verifyssl
         )
     else:  # Default to basic authentication if no zenapikey or bearer token is provided

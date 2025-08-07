@@ -36,7 +36,7 @@ class Credentials:
     get_session():
         Creates and returns a requests Session object configured with SSL settings.
     """
-    def __init__(self, odm_url, odm_url_runtime=None, client_id=None, client_secrets=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
+    def __init__(self, odm_url, odm_url_runtime=None, client_id=None, client_secret=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
 
         self.odm_url=odm_url.rstrip('/') 
         if odm_url_runtime is not None:
@@ -54,7 +54,7 @@ class Credentials:
         self.username = username
         self.password = password
         self.client_id = client_id
-        self.client_secret = client_secrets
+        self.client_secret = client_secret
         self.zenapikey = zenapikey
         self.verify_ssl = verify_ssl
         self.ssl_cert_path = ssl_cert_path
