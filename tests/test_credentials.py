@@ -55,10 +55,10 @@ def test_get_auth_missusername_zenapikey():
 
 def test_get_auth_bearer_token():
     # Test get_auth with bearer_token
-    cred = Credentials(odm_url="http://localhost:9060/res", bearer_token="test_token")
+    cred = Credentials(odm_url="http://localhost:9060/res", client_id="test_token", client_secrets="test_secret")
     headers = cred.get_auth()
     assert headers == {
-        'Authorization': 'Bearer test_token',
+        'Authorization': f'Bearer test_token:test_secret',
         'Content-Type': 'application/json; charset=UTF-8',
         'accept': 'application/json; charset=UTF-8'
     }

@@ -16,8 +16,10 @@ class Credentials:
         The username for basic authentication.
     password : str, optional
         The password for basic authentication.
-    bearer_token : str, optional
-        The bearer token for token-based authentication.
+    client_id : str, optional
+        The OpenID Client Id to connect to the ODM product for OpenID authentication.
+    client_secret : str, optional
+        The OpenID Client Secret to connect to the ODM product for OpenID authentication.
     zenapikey : str, optional
         The ZenAPI key for API key-based authentication.
     verify_ssl : bool, optional
@@ -34,7 +36,7 @@ class Credentials:
     get_session():
         Creates and returns a requests Session object configured with SSL settings.
     """
-    def __init__(self, odm_url, odm_url_runtime=None, username=None, password=None, bearer_token=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
+    def __init__(self, odm_url, odm_url_runtime=None, client_id=None, client_secrets=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
 
         self.odm_url=odm_url.rstrip('/') 
         if odm_url_runtime is not None:
@@ -51,7 +53,8 @@ class Credentials:
             raise ValueError("'"+self.odm_url+"' is not a valid URL")
         self.username = username
         self.password = password
-        self.bearer_token = bearer_token
+        self.client_id = client_id
+        self.client_secret = client_secrets
         self.zenapikey = zenapikey
         self.verify_ssl = verify_ssl
         self.ssl_cert_path = ssl_cert_path
@@ -70,9 +73,16 @@ class Credentials:
                 'Content-Type': 'application/json; charset=UTF-8', 
                 'accept': 'application/json; charset=UTF-8'
             }
-        elif self.bearer_token:
+        elif self.client_id:
+            if not self.client_id or not self.client_secret:
+                raise ValueError("Both client_id and client_secret must be provided for OpenID authentication.")
+            # TODO Tobe implemented with OpenID Connect
+            # For now, we will use a placeholder for the bearer token
+            # In a real implementation, you would obtain a token from the OpenID provider
+            bearer_token = self.client_id + ":" + self.client_secret
+
             return {
-                'Authorization': f'Bearer {self.bearer_token}',
+                'Authorization': f'Bearer {bearer_token}',
                 'Content-Type': 'application/json; charset=UTF-8',
                 'accept': 'application/json; charset=UTF-8'
             }
