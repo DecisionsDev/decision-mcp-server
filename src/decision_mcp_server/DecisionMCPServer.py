@@ -63,12 +63,20 @@ class DecisionMCPServer:
             rulesetPath=self.repository[name].rulesetPath,
             decisionInputs=arguments
         )
-        if result.get("__DecisionID__") is not None:
-            del result["__DecisionID__"]
+
+        # Handle dictionary response
+        if isinstance(result, dict):
+            if result.get("__DecisionID__") is not None:
+                del result["__DecisionID__"]
+            response_text = json.dumps(result, indent=2, ensure_ascii=False)
+        else:
+            # Handle non-dict response (string, etc)
+            response_text = str(result)
+
         return [
             types.TextContent(
                 type="text",
-                text=json.dumps(result, indent=2, ensure_ascii=False) if isinstance(result, dict) else str(result)
+                text=response_text
             )
         ]
 
