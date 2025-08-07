@@ -7,7 +7,7 @@ This document contains instructions for building, publishing, and debugging the 
 
 Here is the requirement to contriube to the code
    * [Rancher](https://rancherdesktop.io/) or a Docker equivalent implementation
-   * Python 11 or higher
+   * Python 3.11 or higher
    * [uv](https://docs.astral.sh/uv/getting-started/installation/)
    * [NodeJS/NPX](https://nodejs.org/en) (On mac `brew install node`)
      
@@ -17,7 +17,7 @@ To develop localy you can use the ODM for Developer image.
 
 This allow you to test the connection between the MCP Server and ODM localy.
 ```bash
-docker run -d --network wxo-server -p 9060:9060 -e SAMPLE=true -e LICENSE=accept --name odm ibmcom/odm:9.5.0.0_25.0.0
+docker run -d -p 9060:9060 -e SAMPLE=true -e LICENSE=accept --name odm docker.io/ibmcom/odm:9.5.0.0_25.0.0
 ```
 You can find a ruleapp in the directory  [samples/samples-ruleapp.jar](samples/samples-ruleapp.jar) that you can use for the test.
 
@@ -30,6 +30,12 @@ git clone the repository
 git clone git@github.com:DecisionsDev/decision-mcp-server.git
 ```
 
+or
+
+```bash
+git clone https://github.com/DecisionsDev/decision-mcp-server.git
+```
+
 Then you can run the MCP server as show in the next section Debugging.
 
 
@@ -40,7 +46,7 @@ Since MCP servers run over stdio, debugging can be challenging. For the best deb
 You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
 
 ```bash
-npx @modelcontextprotocol/inspector uv --from git+https://github.com/DecisionsDev/decision-mcp-server run decision-mcp-server
+npx @modelcontextprotocol/inspector uv run decision-mcp-server
 ```
 
 Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
