@@ -1,9 +1,156 @@
 import pytest
 from unittest.mock import Mock, patch
-from decision_mcp_server.DecisionMCPServer import DecisionMCPServer
+import os
+import argparse
+from decision_mcp_server.DecisionMCPServer import DecisionMCPServer, parse_arguments, create_credentials
 from decision_mcp_server.Credentials import Credentials
 import mcp.types as types
+from mcp.server import Server
 import json
+
+# Test fixtures
+@pytest.fixture
+def mock_credentials():
+    return Credentials(
+        odm_url="http://test:9060/res",
+        username="test_user",
+        password="test_pass"
+    )
+
+@pytest.fixture
+def mock_server():
+    return Mock(spec=Server)
+
+@pytest.fixture
+def decision_server(mock_credentials, mock_server):
+    server = DecisionMCPServer(credentials=mock_credentials)
+    server.server = mock_server
+    server.manager = Mock()
+    return server
+
+# Test DecisionMCPServer initialization
+def test_server_initialization(decision_server):
+    assert isinstance(decision_server.notes, dict)
+    assert isinstance(decision_server.repository, dict)
+    assert decision_server.server is not None
+    assert decision_server.credentials is not None
+
+# Test argument parsing
+@pytest.mark.parametrize("args,expected", [
+    (
+        ["--url", "http://test-odm:9060/res"],
+        {"url": "http://test-odm:9060/res"}
+    ),
+    (
+        ["--username", "testuser", "--password", "testpass"],
+        {"username": "testuser", "password": "testpass"}
+    ),
+    (
+        ["--zenapikey", "test-key"],
+        {"zenapikey": "test-key"}
+    ),
+    (
+        ["--client_id", "test-client", "--client_secret", "test-secret"],
+        {"client_id": "test-client", "client_secret": "test-secret"}
+    ),
+])
+def test_parse_arguments(args, expected):  # Added 'expected' parameter
+    with patch('sys.argv', ['script'] + args):
+        parsed_args = parse_arguments()
+        for key, value in expected.items():
+            assert getattr(parsed_args, key) == value
+
+# Test credentials creation
+def test_create_credentials_basic_auth():
+    args = argparse.Namespace(
+        url="http://test:9060/res",
+        runtime_url=None,
+        username="test_user",
+        password="test_pass",
+        zenapikey=None,
+        client_id=None,
+        client_secret=None,
+        verifyssl="True"
+    )
+    credentials = create_credentials(args)
+    assert credentials.odm_url == "http://test:9060/res"
+    assert credentials.username == "test_user"
+    assert credentials.password == "test_pass"
+
+def test_create_credentials_zen_api():
+    args = argparse.Namespace(
+        url="http://test:9060/res",
+        runtime_url="http://test:9060/DecisionService",
+        username="test_user",
+        zenapikey="test-key",
+        client_id=None,
+        client_secret=None,
+        verifyssl="True"
+    )
+    credentials = create_credentials(args)
+    assert credentials.zenapikey == "test-key"
+
+def test_create_credentials_openid():
+    args = argparse.Namespace(
+        url="http://test:9060/res",
+        runtime_url="http://test:9060/DecisionService",
+        username=None,
+        password=None,
+        zenapikey=None,
+        client_id="test-client",
+        client_secret="test-secret",
+        verifyssl="True"
+    )
+    credentials = create_credentials(args)
+    assert credentials.client_id == "test-client"
+    assert credentials.client_secret == "test-secret"  # Changed from client_secrets to client_secret
+
+# Test error cases
+def test_create_credentials_missing_basic_auth():
+    args = argparse.Namespace(
+        url="http://test:9060/res",
+        runtime_url=None,
+        username=None,
+        password=None,
+        zenapikey=None,
+        client_id=None,
+        client_secret=None,
+        verifyssl="True"
+    )
+    with pytest.raises(ValueError) as exc_info:
+        create_credentials(args)
+    assert str(exc_info.value) == "Username and password must be provided for basic authentication."
+
+# Test SSL verification
+@pytest.mark.parametrize("verify_ssl,expected", [
+    ("True", True),
+    ("False", False)
+])
+def test_ssl_verification(verify_ssl, expected):
+    args = argparse.Namespace(
+        url="http://test:9060/res",
+        runtime_url=None,
+        username="test_user",
+        password="test_pass",
+        zenapikey=None,        # Added missing required args
+        client_id=None,        # Added missing required args
+        client_secret=None,    # Added missing required args
+        verifyssl=verify_ssl
+    )
+    credentials = create_credentials(args)
+    assert credentials.verify_ssl == expected
+
+# Test environment variables
+def test_environment_variables():
+    with patch.dict(os.environ, {
+        'ODM_URL': 'http://env-test:9060/res',
+        'ODM_USERNAME': 'env_user',
+        'ODM_PASSWORD': 'env_pass'
+    }), patch('sys.argv', ['script']):  # Added sys.argv patch
+        args = parse_arguments()
+        assert args.url == 'http://env-test:9060/res'
+        assert args.username == 'env_user'
+        assert args.password == 'env_pass'
 
 class DummyTool:
     def __init__(self, name, description, input_schema):

@@ -1,0 +1,27 @@
+services:
+  odm:
+    image: ibmcom/odm
+    hostname: odm
+    container_name: odm
+    environment:
+      - LICENSE=accept
+      - SAMPLE=true
+    healthcheck:
+      test: curl -k -f http://localhost:9060/decisioncenter/healthCheck || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+    ports:
+      - 9060:9060
+  triggerDeployment:
+    image: ibmcom/odm
+    container_name: upload_materials
+    depends_on:
+      odm:
+        condition: service_healthy
+    volumes:
+      - ./samples:/samples
+    entrypoint: >
+      sh -c "cd /samples/ && ./deploy_demo_materials.sh basic http://odm:9060/decisioncenter-api http://localhost:9060/res odmAdmin odmAdmin &&  echo '✅ ODM Ready for MCP Server' "
+    restart: "no"
