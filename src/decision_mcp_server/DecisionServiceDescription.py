@@ -17,16 +17,17 @@ class DecisionServiceDescription:
         input_schema (dict): The schema describing the expected input for the tool.
         callback_name (str, optional): The name of the callback function to be used (default is None).
     """
-    def __init__(self, tool_name, ruleset, input_schema, callback_name=None):
+    def __init__(self, tool_name, ruleset, description, input_schema, callback_name=None):
         self.tool_name = tool_name
         self.engine = "odm"
+        self.description = description
         self.rulesetPath = "/" + str(ruleset["id"])
         self.callbackName = callback_name
         self.ruleset = ruleset
 
         self.tool_description = types.Tool(
             name=tool_name,
-            description=ruleset["description"],
+            description=description,
             inputSchema=input_schema,
         )
 

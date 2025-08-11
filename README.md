@@ -329,11 +329,11 @@ You can add ruleset properties using any of these methods:
    - Click "Save"
 
 #### MCP Configuration Properties
-
 Property | Description | Default |
-|----------|-------------|---------|
-`tools.enabled` | Controls whether the ruleset is exposed as an MCP tool | `false` |
-`tools.description` | Overrides the default description of the ruleset when exposed as a tool | Ruleset description |
+|-------------------|--------------------------------------------------------------------------|------------------------------------------|
+`tools.enabled`     | Controls whether the ruleset is exposed as an MCP tool                   | `false`                                  |
+`tools.name`        | Customizes the name of the tool as exposed to AI assistants              | Name of the decision operation. Display Name in the Decision Server console. |
+`tools.description` | Overrides the default description of the ruleset when exposed as a tool  | Description of the decision operation     |
 
 #### Example
 
@@ -366,9 +366,10 @@ tools.description=This tool calculates vacation days based on employee tenure an
 ## Development Checklist
 
 - [x] Add sample scenario in the documentation - On going
+- [x] Put in place intensive unit-tests with Coverage.
 - [ ] Implement Notification Context
 - [ ] Investigate XOM annotation
-- [ ] Investigate How to inject description from Decision Center
+- [x] Investigate How to inject description from Decision Center
 - [ ] Store and expose Decision Trace executions as MCP resources
 - [ ] Declare Structured Output
 - [ ] Verify OpenID Connect authentication

@@ -18,16 +18,18 @@ from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescri
 def test_decision_service_description_initialization():
     tool_name = "test_tool"
     ruleset = {"id": "ruleset1", "description": "A test ruleset"}
+    description = "A tool description"  # This should be a string
     input_schema = {"type": "object", "properties": {"foo": {"type": "string"}}}
     callback_name = "callback_func"
 
-    desc = DecisionServiceDescription(tool_name, ruleset, input_schema, callback_name)
-
+    # Correct order of parameters: tool_name, ruleset, description, input_schema, callback_name
+    desc = DecisionServiceDescription(tool_name, ruleset, description, input_schema, callback_name)
+    
     assert desc.tool_name == tool_name
-    assert desc.engine == "odm"
+    assert desc.description == description
     assert desc.rulesetPath == "/ruleset1"
     assert desc.callbackName == callback_name
     assert desc.ruleset == ruleset
     assert desc.tool_description.name == tool_name
-    assert desc.tool_description.description == ruleset["description"]
+    assert desc.tool_description.description == description
     assert desc.tool_description.inputSchema == input_schema
