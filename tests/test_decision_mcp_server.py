@@ -50,8 +50,8 @@ def test_server_initialization(decision_server):
         {"zenapikey": "test-key"}
     ),
     (
-        ["--client_id", "test-client", "--client_secret", "test-secret"],
-        {"client_id": "test-client", "client_secret": "test-secret"}
+        ["--client_id", "test-client", "--client_secret", "test-secret", "--token_url", "http://op/token", "--scope", "openid"],
+        {"client_id": "test-client", "client_secret": "test-secret", "token_url", "http://op/token", "scope", "openid"}
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
@@ -99,11 +99,15 @@ def test_create_credentials_openid():
         zenapikey=None,
         client_id="test-client",
         client_secret="test-secret",
+        token_url="http://op/token",
+        scope="openid",
         verifyssl="True"
     )
     credentials = create_credentials(args)
     assert credentials.client_id == "test-client"
-    assert credentials.client_secret == "test-secret"  # Changed from client_secrets to client_secret
+    assert credentials.client_secret == "test-secret"
+    assert credentials.token_url == "http://op/token"
+    assert credentials.scope == "openid"
 
 # Test error cases
 def test_create_credentials_missing_basic_auth():
