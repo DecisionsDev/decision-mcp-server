@@ -51,7 +51,7 @@ def test_server_initialization(decision_server):
     ),
     (
         ["--client_id", "test-client", "--client_secret", "test-secret", "--token_url", "http://op/token", "--scope", "openid"],
-        {"client_id": "test-client", "client_secret": "test-secret", "token_url", "http://op/token", "scope", "openid"}
+        {"client_id": "test-client", "client_secret": "test-secret", "token_url": "http://op/token", "scope": "openid"}
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
