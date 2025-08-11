@@ -301,6 +301,51 @@ or
 
 ---
 
+### Ruleset Properties for MCP Configuration
+
+You can configure how your Decision Server rulesets are exposed as MCP tools by setting specific ruleset properties in IBM ODM. These properties control whether a ruleset is available as a tool and how it's presented to AI assistants.
+
+#### Adding Ruleset Properties
+
+You can add ruleset properties using any of these methods:
+
+1. **In Rule Designer:**
+   - Open your ruleset project
+   - Right-click on the ruleset > Properties > Ruleset Properties
+   - Add the desired properties with their values
+   - Save and deploy your ruleset
+
+2. **In Decision Center:**
+   - Open the ruleset > Settings > Properties
+   - Add the desired properties with their values
+   - Save and deploy your ruleset
+
+3. **In Decision Server Console:**
+   - Log in to the Decision Server Console
+   - Navigate to Explorer > Rulesets
+   - Select your ruleset
+   - Click on the "Properties" tab
+   - Add the desired properties with their values
+   - Click "Save"
+
+#### MCP Configuration Properties
+
+Property | Description | Default |
+|----------|-------------|---------|
+`tools.enabled` | Controls whether the ruleset is exposed as an MCP tool | `false` |
+`tools.description` | Overrides the default description of the ruleset when exposed as a tool | Ruleset description |
+
+#### Example
+
+```
+tools.enabled=true
+tools.description=This tool calculates vacation days based on employee tenure and position
+```
+
+**Note:** After updating ruleset properties, you need to redeploy the ruleset for changes to take effect.
+
+---
+
 **Tips:**
 - Use CLI arguments for quick overrides or non-sensitive parameters.
 - Use environment variables for secrets or when integrating with secret managers.
@@ -320,7 +365,7 @@ or
 
 ## Development Checklist
 
-- [ ] Add sample scenario in the documentation - On going
+- [x] Add sample scenario in the documentation - On going
 - [ ] Implement Notification Context
 - [ ] Investigate XOM annotation
 - [ ] Investigate How to inject description from Decision Center
