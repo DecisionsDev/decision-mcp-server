@@ -2,6 +2,7 @@ import requests
 from validator_collection import  checkers
 import base64
 import logging
+import json
 class Credentials:
     """
     A class to handle credentials for accessing an ODM (Operational Decision Manager) service.
@@ -16,6 +17,11 @@ class Credentials:
         The username for basic authentication.
     password : str, optional
         The password for basic authentication.
+    token_url : str, optional
+        The OpenID URL to retrieve an access token for OpenID authentication.
+    scope : str, optional
+        The value of the 'scope' parameter in the request sent to the OP to retrieve an access token for OpenID authentication using Client Credentials.
+        The default value is 'openid'
     client_id : str, optional
         The OpenID Client Id to connect to the ODM product for OpenID authentication.
     client_secret : str, optional
@@ -36,7 +42,7 @@ class Credentials:
     get_session():
         Creates and returns a requests Session object configured with SSL settings.
     """
-    def __init__(self, odm_url, odm_url_runtime=None, client_id=None, client_secret=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
+    def __init__(self, odm_url, odm_url_runtime=None, token_url=None, scope='openid', client_id=None, client_secret=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
 
         self.odm_url=odm_url.rstrip('/') 
         if odm_url_runtime is not None:
@@ -53,6 +59,8 @@ class Credentials:
             raise ValueError("'"+self.odm_url+"' is not a valid URL")
         self.username = username
         self.password = password
+        self.token_url = token_url
+        self.scope = scope
         self.client_id = client_id
         self.client_secret = client_secret
         self.zenapikey = zenapikey
@@ -74,15 +82,19 @@ class Credentials:
                 'accept': 'application/json; charset=UTF-8'
             }
         elif self.client_id:
-            if not self.client_id or not self.client_secret:
-                raise ValueError("Both client_id and client_secret must be provided for OpenID authentication.")
-            # TODO Tobe implemented with OpenID Connect
-            # For now, we will use a placeholder for the bearer token
-            # In a real implementation, you would obtain a token from the OpenID provider
-            bearer_token = self.client_id + ":" + self.client_secret
-
+            if not self.client_id or not self.client_secret or not self.token_url:
+                raise ValueError("All three parameters are required for OpenId authentication: 'client_id', 'client_secret' and 'token_url'.")
+            data = {
+                'grant_type': 'client_credentials',
+                'scope':       self.scope,
+            }
+            auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
+            response = requests.post(self.token_url, data=data, auth=auth)
+            response.raise_for_status() # raise an HTTPError if the request failed
+            token_data = response.json()
+            access_token = token_data['access_token']
             return {
-                'Authorization': f'Bearer {bearer_token}',
+                'Authorization': f'Bearer {access_token}',
                 'Content-Type': 'application/json; charset=UTF-8',
                 'accept': 'application/json; charset=UTF-8'
             }

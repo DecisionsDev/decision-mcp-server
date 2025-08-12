@@ -116,6 +116,8 @@ def parse_arguments():
     parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
     parser.add_argument("--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
     parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
+    parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
+    parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
             
 
@@ -136,8 +138,10 @@ def create_credentials(args):
         return Credentials(
             odm_url=args.url,
             odm_url_runtime=args.runtime_url,
+            token_url=args.token_url,
+            scope=args.scope,
             client_id=args.client_id,
-            client_secret=args.client_secret,  # Changed from client_secrets to client_secret
+            client_secret=args.client_secret,
             verify_ssl=verifyssl
         )
     else:  # Default to basic authentication
@@ -145,6 +149,7 @@ def create_credentials(args):
             raise ValueError("Username and password must be provided for basic authentication.")
         return Credentials(
             odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
             username=args.username,
             password=args.password,
             verify_ssl=verifyssl

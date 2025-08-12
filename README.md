@@ -184,9 +184,9 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
   - **Basic Auth:**  
     - **CLI:** `--username <user> --password <pass>`
     - **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
-  - **OpenID Connect:**  
-    - **CLI:** `--client_id <CLIENT_ID> --client_secret <CLIENT_SECRET>`
-    - **Env:** `CLIENT_ID=<client_id> CLIENT_SECRET=<client_secret>`
+  - **OpenID Connect (using Client Credentials):**  
+    - **CLI:** `--client_id <CLIENT_ID> --client_secret <CLIENT_SECRET> --token_url <TOKEN_URL>` and optionally `--scope <scope>`
+    - **Env:** `CLIENT_ID=<client_id> CLIENT_SECRET=<client_secret> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>`
 
 #### 3. **ODM for Developers (Docker/Local)**
 - **Environment:** Local Docker or Developer Edition
@@ -198,18 +198,20 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 
 ### Parameters Table
 
-| CLI Argument      | Environment Variable | Description                                                                                   | Default                                 |
-|-------------------|---------------------|-----------------------------------------------------------------------------------------------|-----------------------------------------|
-| `--url`           | `ODM_URL`           | URL of the Decision Server console (used for management and deployment operations)            | `http://localhost:9060/res`             |
-| `--runtime-url`   | `ODM_RUNTIME_URL`   | URL of the Decision Server runtime (used for executing decision services)                     | `<ODM_URL>/DecisionService` |
-| `--username`      | `ODM_USERNAME`      | Username for Basic Auth or Zen authentication                                                 | `odmAdmin`                              |
-| `--password`      | `ODM_PASSWORD`      | Password for Basic Auth                                                                       | `odmAdmin`                              |
-| `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication with Cloud Pak for Business Automation                         |                                         |
-| `--client_id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                   |                                         |
-| `--client_secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                               |                                         |
-| `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                        | `True`                                  |
-
-### Customizing MCP Server Configuration
+| CLI Argument      | Environment Variable | Description                                                                                            | Default                                 |
+|-------------------|---------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| `--url`           | `ODM_URL`           | URL of the Decision Server console (used for management and deployment operations)                      | `http://localhost:9060/res`             |
+| `--runtime-url`   | `ODM_RUNTIME_URL`   | URL of the Decision Server runtime (used for executing decision services)                               | `<ODM_URL>/DecisionService`             |
+| `--username`      | `ODM_USERNAME`      | Username for Basic Auth or Zen authentication                                                           | `odmAdmin`                              |
+| `--password`      | `ODM_PASSWORD`      | Password for Basic Auth                                                                                 | `odmAdmin`                              |
+| `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication with Cloud Pak for Business Automation                                   |                                         |
+| `--client_id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                             |                                         |
+| `--client_secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                                         |                                         |
+| `--token_url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
+| `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
+| `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
+          
+### Customizing MCP Server Configuration          
 
 You can configure the MCP server for clients like Claude Desktop or Cursor AI using JSON configuration.  
 **You may use both environment variables and command-line arguments. CLI arguments always take precedence.**
@@ -372,7 +374,7 @@ tools.description=This tool calculates vacation days based on employee tenure an
 - [x] Investigate How to inject description from Decision Center
 - [ ] Store and expose Decision Trace executions as MCP resources
 - [ ] Declare Structured Output
-- [ ] Verify OpenID Connect authentication
+- [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
 - [ ] Record demo video for Claude Desktop integration
 - [x] Add a docker-compose to inject to deploy the ruleapps.
