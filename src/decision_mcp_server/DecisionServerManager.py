@@ -1,4 +1,3 @@
-
 import logging
 import json
 from collections import defaultdict
@@ -100,7 +99,7 @@ class DecisionServerManager:
             filtered_rulesets = [
             (version, ruleset) for version, ruleset in rulesets
             if any(prop["id"] == "ruleset.status" and prop["value"] == "enabled" for prop in ruleset["properties"])
-             and any(prop["id"] == "tools.enabled" for prop in ruleset["properties"])
+             and any(prop["id"] == "tools.enabled" and prop["value"].lower() == "true" for prop in ruleset["properties"])
            ]
             if not filtered_rulesets:
                 continue

@@ -439,6 +439,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [ ] Store and expose Decision Trace executions as MCP resources
 - [ ] Manage ODM certificate
 - [ ] Declare Structured Output
+- [ ] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
 - [ ] Record demo video for Claude Desktop integration
