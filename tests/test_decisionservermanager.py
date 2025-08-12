@@ -325,6 +325,100 @@ def test_tools_name_and_description_handling():
         # Restore the original method
         manager.get_input_schema = original_get_input_schema
 
+def test_extract_highest_version_rulesets_tools_enabled():
+    """Test that only rulesets with tools.enabled=true are included."""
+    
+    # Create test data with various tools.enabled values
+    test_data = [
+        {
+            "id": "app1/v1",
+            "rulesets": [
+                {
+                    "id": "app1/v1/ruleset1",
+                    "version": "1.0",
+                    "displayName": "Ruleset 1",
+                    "description": "Test ruleset 1",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"},
+                        {"id": "tools.enabled", "value": "true"}  # This should be included
+                    ]
+                },
+                {
+                    "id": "app1/v1/ruleset2",
+                    "version": "1.0",
+                    "displayName": "Ruleset 2",
+                    "description": "Test ruleset 2",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"},
+                        {"id": "tools.enabled", "value": "false"}  # This should be excluded
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "app2/v1",
+            "rulesets": [
+                {
+                    "id": "app2/v1/ruleset3",
+                    "version": "1.0",
+                    "displayName": "Ruleset 3",
+                    "description": "Test ruleset 3",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"},
+                        {"id": "tools.enabled", "value": "TRUE"}  # This should be included (case-insensitive)
+                    ]
+                },
+                {
+                    "id": "app2/v1/ruleset4",
+                    "version": "1.0",
+                    "displayName": "Ruleset 4",
+                    "description": "Test ruleset 4",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"}
+                        # No tools.enabled property - should be excluded
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "app3/v1",
+            "rulesets": [
+                {
+                    "id": "app3/v1/ruleset5",
+                    "version": "1.0",
+                    "displayName": "Ruleset 5",
+                    "description": "Test ruleset 5",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"},
+                        {"id": "tools.enabled", "value": "yes"}  # Non-standard value - should be excluded
+                    ]
+                }
+            ]
+        }
+    ]
+    
+    # Create a mock DecisionServerManager
+    credentials = Credentials(
+        odm_url='http://localhost:8885/res',
+        username='mock_user',
+        password='mock_password',
+    )
+    
+    manager = DecisionServerManager(credentials)
+    
+    # Call extract_highest_version_rulesets
+    result = manager.extract_highest_version_rulesets(test_data)
+    
+    # Verify only rulesets with tools.enabled=true (case-insensitive) are included
+    assert len(result) == 2
+    assert "app1ruleset1" in result
+    assert "app2ruleset3" in result
+    
+    # Verify rulesets with tools.enabled=false, missing tools.enabled, or non-standard values are excluded
+    assert "app1ruleset2" not in result
+    assert "app2ruleset4" not in result
+    assert "app3ruleset5" not in result
+
 # Run the tests
 if __name__ == '__main__':
     pytest.main()
