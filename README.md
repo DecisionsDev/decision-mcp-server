@@ -357,6 +357,71 @@ tools.description=This tool calculates vacation days based on employee tenure an
 
 ---
 
+### Fine-Tuning Tool Descriptions for LLMs
+
+When exposing decision services as tools for LLMs, the quality of the tool descriptions significantly impacts how effectively the LLM can utilize them. Here are best practices for optimizing your tool descriptions:
+
+#### Detailed Service Descriptions
+
+Having detailed descriptions of what a service does and the expected parameter values can guide the LLM to be more precise when triggering tools.
+
+##### Example:
+
+```
+Allow to compute the beauty advise. This takes as parameters:
+- age: should be between 0 and 110
+- sex: Value should be Male or Female
+- skin color: should be one of these values: Dark, Ebony, Ivory, Light, Medium or Unknown
+- hair color: should be one of these values: Black, Blonde, Brown, Gray, Red, White or Unknown
+
+For the hair color or skin color, you can suggest possible values.
+```
+
+This detailed description helps the LLM understand:
+- The purpose of the service ("compute beauty advice")
+- Valid parameter ranges and constraints
+- Acceptable enumeration values
+- Guidance on how to handle certain parameters
+
+#### Enhancing OpenAPI with Swagger Annotations
+
+When service descriptions alone aren't sufficient to fully describe the API signature, you can augment your OpenAPI generation by adding Swagger annotations to your Java classes:
+
+```java
+package miniloan;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * This class models a borrower.
+ * A borrower is created with a name, a credit score, and a yearly income.
+ */
+@Schema(description = "This class models a borrower. A borrower is created with a name, a credit score, and a yearly income.")
+public class Borrower {
+    @Schema(description = "The name of the borrower.")
+    private String name;
+    
+    @Schema(description = "The credit score of the borrower.", format = "int32")
+    private int creditScore;
+    
+    @Schema(description = "The yearly income of the borrower.", format = "int32")
+    private int yearlyIncome;
+
+    
+    public Borrower() {
+    }
+}
+```
+
+These annotations provide:
+- Detailed descriptions for each field
+- Format specifications
+- Additional metadata that can be included in the generated OpenAPI specification
+
+> **Note:** It's not necessary to package the Swagger JAR file in the XOM (Execution Object Model) as it's already part of the IBM ODM product. You can use the annotations directly without adding additional dependencies to your project.
+
+By combining rich service descriptions with properly annotated model classes, you can create tool definitions that LLMs can understand and use with high precision, reducing errors and improving the quality of interactions.
+
 ## More informations
 
 - For IBM ODM, see [IBM Documentation](https://www.ibm.com/docs/en/odm).
