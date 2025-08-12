@@ -433,11 +433,11 @@ By combining rich service descriptions with properly annotated model classes, yo
 ## Development Checklist
 
 - [x] Add sample scenario in the documentation - On going
-- [x] Put in place intensive unit-tests with Coverage.
-- [ ] Implement Notification Context
-- [ ] Investigate XOM annotation
+- [x] Put in place intensive unit-tests with Coverage
+- [x] Investigate XOM annotation
 - [x] Investigate How to inject description from Decision Center
 - [ ] Store and expose Decision Trace executions as MCP resources
+- [ ] Manage ODM certificate
 - [ ] Declare Structured Output
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
@@ -448,3 +448,4 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Support multiple Decision Server endpoints
 - [x] Test and document Claude Desktop integration
 - [x] Test  Cursor AI integration
+- [ ] Implement Notification Context
