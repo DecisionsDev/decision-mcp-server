@@ -374,6 +374,7 @@ tools.description=This tool calculates vacation days based on employee tenure an
 - [x] Investigate How to inject description from Decision Center
 - [ ] Store and expose Decision Trace executions as MCP resources
 - [ ] Declare Structured Output
+- [ ] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
 - [ ] Record demo video for Claude Desktop integration
