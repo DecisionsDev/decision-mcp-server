@@ -119,7 +119,7 @@ def parse_arguments():
     parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
     parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
-            
+    parser.add_argument("--ssl_cert_path", type=str, default=os.getenv("SSL_CERT_PATH"), help="Path to the SSL certificate file. If not provided, defaults to system certificates.")
 
     return parser.parse_args()
 
@@ -132,6 +132,7 @@ def create_credentials(args):
             odm_url_runtime=args.runtime_url,
             username=args.username,
             zenapikey=args.zenapikey,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
     elif args.client_id:  # If OpenID credentials are provided, use them for authentication
@@ -142,6 +143,7 @@ def create_credentials(args):
             scope=args.scope,
             client_id=args.client_id,
             client_secret=args.client_secret,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
     else:  # Default to basic authentication
@@ -152,6 +154,7 @@ def create_credentials(args):
             odm_url_runtime=args.runtime_url,
             username=args.username,
             password=args.password,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
 async def main():
