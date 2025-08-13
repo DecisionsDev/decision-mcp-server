@@ -1,3 +1,4 @@
+
 import logging
 import json
 from collections import defaultdict
@@ -26,7 +27,13 @@ class DecisionServerManager:
 
     Usage:
         # Initialize the manager with credentials
-        credentials = Credentials(odm_url='http://your_odm_url', username='your_username', password='your_password')
+        # Example using environment variables (recommended for security)
+        import os
+        credentials = Credentials(
+            odm_url=os.environ.get('ODM_URL'),
+            username=os.environ.get('ODM_USERNAME'),
+            password=os.environ.get('ODM_PASSWORD')
+        )
         manager = DecisionServerManager(credentials)
 
         # Fetch rulesets
@@ -100,7 +107,7 @@ class DecisionServerManager:
             filtered_rulesets = [
             (version, ruleset) for version, ruleset in rulesets
             if any(prop["id"] == "ruleset.status" and prop["value"] == "enabled" for prop in ruleset["properties"])
-             and any(prop["id"] == "tools.enabled" and prop["value"].lower() == "true" for prop in ruleset["properties"])
+             and any(prop["id"] == "agent.enabled" and prop["value"].lower() == "true" for prop in ruleset["properties"])
            ]
             if not filtered_rulesets:
                 continue
@@ -177,11 +184,11 @@ class DecisionServerManager:
         Returns:
             dict: The input schema of the ruleset.
         """
-        # Extract tools.parameters
-        tools_parameters = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.parameters"), "[]")
+        # Extract agent.parameters
+        tools_parameters = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.parameters"), "[]")
 
         if tools_parameters is None or tools_parameters == "[]":
-            self.logger.warning(f"No tools.parameters found for ruleset {ruleset['id']} generating the json schema.")
+            self.logger.warning(f"No agent.parameters found for ruleset {ruleset['id']} generating the json schema.")
             return self.get_ruleset_openapi(ruleset)
         else:
             return json.loads(tools_parameters)
@@ -205,9 +212,9 @@ class DecisionServerManager:
         for ruleset in filtered_rulesets.values():
 
             input_schema = self.get_input_schema(ruleset)
-            callbackName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.callback"), None)
-            toolName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.name"), ruleset["displayName"]).replace(" ", "_").lower()
-            toolDescription = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "tools.description"), ruleset["description"])
+            callbackName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.callback"), None)
+            toolName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.name"), ruleset["displayName"]).replace(" ", "_").lower()
+            toolDescription = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.description"), ruleset["description"])
              # Define a class to hold the formatted ruleset data
             formatted_ruleset = DecisionServiceDescription(toolName, ruleset, toolDescription, input_schema,callbackName)
             formatted_tools.append(formatted_ruleset)
@@ -276,3 +283,4 @@ class DecisionServerManager:
                 print(f"Request error, status: {response.status_code}")
         except requests.exceptions.RequestException as e:  
             return {"error": f"An error occurred when invoking the Decision Service: {e}"}
+    
