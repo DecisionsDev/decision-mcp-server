@@ -176,7 +176,7 @@ class DecisionServerManager:
 
         """
         :no-index:
-        Extracts the input schema from a ruleset.
+        Extracts the input schema from a ruleset using OpenAPI generation.
 
         Args:
             ruleset (dict): A dictionary representing a ruleset.
@@ -184,14 +184,7 @@ class DecisionServerManager:
         Returns:
             dict: The input schema of the ruleset.
         """
-        # Extract agent.parameters
-        tools_parameters = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.parameters"), "[]")
-
-        if tools_parameters is None or tools_parameters == "[]":
-            self.logger.warning(f"No agent.parameters found for ruleset {ruleset['id']} generating the json schema.")
-            return self.get_ruleset_openapi(ruleset)
-        else:
-            return json.loads(tools_parameters)
+        return self.get_ruleset_openapi(ruleset)
     
 
 

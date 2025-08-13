@@ -129,23 +129,15 @@ def test_fetch_rulesets(caplog):
  #   assert "RuleApp: ruleapp1, Ruleset: ruleset1, Highest Version Ruleset: ruleapp1/v1/ruleset2" in log_output
  #   assert "RuleApp: ruleapp2, Ruleset: ruleset2, Highest Version Ruleset: ruleapp2/v1/ruleset2" in log_output
 
-@pytest.mark.parametrize("agent_parameters,expected_call_openapi", [
-    (None, True),  # When agent.parameters is None, should call get_ruleset_openapi
-    ("[]", True),  # When agent.parameters is "[]", should call get_ruleset_openapi
-    ('{"type":"object","properties":{"name":{"type":"string"}}}', False)  # Valid JSON, should not call get_ruleset_openapi
-])
-def test_get_input_schema(agent_parameters, expected_call_openapi):
-    # Create a test ruleset with the given agent.parameters value
+def test_get_input_schema():
+    """
+    Test that get_input_schema always uses the OpenAPI generation.
+    """
+    # Create a test ruleset
     ruleset = {
         "id": "test/v1/ruleset",
         "properties": []
     }
-    
-    if agent_parameters is not None:
-        ruleset["properties"].append({
-            "id": "agent.parameters",
-            "value": agent_parameters
-        })
     
     # Create a mock DecisionServerManager with a mocked get_ruleset_openapi method
     import os
@@ -172,17 +164,11 @@ def test_get_input_schema(agent_parameters, expected_call_openapi):
         # Call get_input_schema
         result = manager.get_input_schema(ruleset)
         
-        # Check if get_ruleset_openapi was called as expected
-        assert openapi_called[0] == expected_call_openapi
+        # Check that get_ruleset_openapi was called
+        assert openapi_called[0] == True
         
-        # If agent_parameters is a valid JSON and not None or "[]",
-        # verify the result matches the parsed JSON
-        if agent_parameters and agent_parameters != "[]":
-            expected = json.loads(agent_parameters)
-            assert result == expected
-        else:
-            # Otherwise, verify the result is the mocked OpenAPI schema
-            assert result == {"type": "object", "properties": {"mocked": {"type": "string"}}}
+        # Verify the result is the mocked OpenAPI schema
+        assert result == {"type": "object", "properties": {"mocked": {"type": "string"}}}
     
     finally:
         # Restore the original method
