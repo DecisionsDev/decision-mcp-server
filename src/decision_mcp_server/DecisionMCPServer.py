@@ -1,23 +1,32 @@
 import asyncio
 import json
+from typing import Optional
 from mcp.server.models import InitializationOptions
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from pydantic import AnyUrl
 import mcp.server.stdio
 import logging
+
+from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 from decision_mcp_server.Credentials import Credentials
 from decision_mcp_server.DecisionServerManager import DecisionServerManager
-from decision_mcp_server.config import INSTRUCTIONS
+from decision_mcp_server.config import INSTRUCTIONS, BASE_DIR
+from decision_mcp_server.ExecutionToolTrace import ExecutionToolTrace, DiskTraceStorage
 import argparse
 import os
 
 class DecisionMCPServer:
-    def __init__(self,credentials: Credentials):
+    def __init__(self, credentials: Credentials):
         self.notes: dict[str, str] = {}
         self.repository: dict[str, DecisionServiceDescription] = {}
+        
+        # Set up trace storage with default path in user's home directory
+        traces_dir = os.path.join(BASE_DIR, "traces")
+        self.execution_traces = DiskTraceStorage(storage_dir=traces_dir, max_traces=50)
+        
         self.server = Server("decision-mcp-server")
-        self.manager = None,
+        self.manager = None
         self.credentials = credentials
         
 
@@ -44,6 +53,10 @@ class DecisionMCPServer:
 
     async def list_tools(self) -> list[types.Tool]:
         logging.info("Listing ODM tools")
+        # Ensure manager is initialized before using it
+        if self.manager is None:
+            self.manager = DecisionServerManager(credentials=self.credentials)
+            
         rulesets = self.manager.fetch_rulesets()
         extractedTools = self.manager.generate_tools_format(rulesets)
         tools = []
@@ -59,19 +72,60 @@ class DecisionMCPServer:
             raise ValueError(f"Unknown tool: {name}")
 
         logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
+        # Ensure manager is initialized before using it
+        if self.manager is None:
+            self.manager = DecisionServerManager(credentials=self.credentials)
+            
         result = self.manager.invokeDecisionService(
             rulesetPath=self.repository[name].rulesetPath,
             decisionInputs=arguments
         )
 
+        # Extract decision ID and trace if available
+        decision_id = None
+        decision_trace = None
+        
         # Handle dictionary response
         if isinstance(result, dict):
             if result.get("__DecisionID__") is not None:
+                decision_id = result["__DecisionID__"]
                 del result["__DecisionID__"]
+            if result.get("__DecisionTrace__") is not None:
+                # Ensure decision_trace is a dictionary
+                trace_value = result["__DecisionTrace__"]
+                if isinstance(trace_value, dict):
+                    decision_trace = trace_value
+                elif isinstance(trace_value, str):
+                    # Try to parse JSON string to dict
+                    try:
+                        decision_trace = json.loads(trace_value)
+                    except json.JSONDecodeError:
+                        # If not valid JSON, store as dict with original string
+                        decision_trace = {"raw_trace": trace_value}
+                else:
+                    # For any other type, convert to a dictionary
+                    decision_trace = {"value": str(trace_value)}
+                
+                del result["__DecisionTrace__"]
+                
             response_text = json.dumps(result, indent=2, ensure_ascii=False)
         else:
             # Handle non-dict response (string, etc)
             response_text = str(result)
+
+        # Create and store execution trace
+        trace = ExecutionToolTrace(
+            tool_name=name,
+            ruleset_path=self.repository[name].rulesetPath,
+            inputs=arguments or {},
+            results=result,
+            decision_id=decision_id,
+            decision_trace=decision_trace
+        )
+        trace_id = self.execution_traces.add(trace)
+        
+        # Log the creation of the trace
+        logging.info(f"Created execution trace with ID: {trace_id}")
 
         return [
             types.TextContent(
@@ -79,6 +133,25 @@ class DecisionMCPServer:
                 text=response_text
             )
         ]
+        
+    # Add a new method to list execution traces
+    async def list_execution_traces(self) -> list[types.Resource]:
+        """Return a list of execution traces as resources."""
+        trace_metadata = self.execution_traces.get_all_metadata()
+        return [
+            types.Resource(
+                uri=AnyUrl(f"trace://{metadata['id']}"),
+                name=f"Execution Trace: {metadata['tool_name']}",
+                description=f"Trace executed at {metadata['timestamp']}",
+                mimeType="application/json",
+            )
+            for metadata in trace_metadata
+        ]
+    
+    # Add a method to get a specific execution trace
+    async def get_execution_trace(self, trace_id: str) -> Optional[ExecutionToolTrace]:
+        """Get a specific execution trace by ID."""
+        return self.execution_traces.get(trace_id)
 
     async def start(self):
 

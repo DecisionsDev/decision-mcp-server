@@ -11,4 +11,4 @@ def main():
     asyncio.run(DecisionMCPServer.main())
 
 # Optionally expose other important items at package level
-__all__ = ['main', 'DecisionMCPServer', 'DecisionServerManager', 'Credentials']
+__all__ = ['main', 'DecisionMCPServer', 'DecisionServerManager', 'Credentials', "DecisionServiceDescription"]
