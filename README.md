@@ -210,6 +210,9 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--token_url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
+| `--traces-dir`    | `TRACES_DIR`        | Directory to store execution traces                                                                     | `~/.mcp-server/traces`                  |
+| `--trace-enable`  | `TRACE_ENABLE`      | Enable or disable trace storage (`True` or `False`)                                                     | `False`                                 |
+| `--trace-maxsize` | `TRACE_MAXSIZE`     | Maximum number of traces to store before removing oldest traces                                          | `50`                                    |
           
 ### Customizing MCP Server Configuration          
 
@@ -436,7 +439,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Put in place intensive unit-tests with Coverage
 - [x] Investigate XOM annotation
 - [x] Investigate How to inject description from Decision Center
-- [ ] Store and expose Decision Trace executions as MCP resources
+- [x] Store and expose Decision Trace executions as MCP resources
 - [ ] Manage ODM certificate
 - [ ] Declare Structured Output
 - [ ] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )

@@ -4,6 +4,7 @@ from collections import defaultdict
 import requests
 import yaml
 import jsonref
+from typing import Dict, Any, Optional
 from requests.exceptions import RequestException
 from .DecisionServiceDescription import DecisionServiceDescription
 class DecisionServerManager:
@@ -110,6 +111,7 @@ class DecisionServerManager:
 
         return highest_version_rulesets
     
+
     def to_plain_dict(self,obj):
         """
         Recursively convert a jsonref.JsonRef structure to a plain JSON-serializable dict.
@@ -120,7 +122,6 @@ class DecisionServerManager:
             return [self.to_plain_dict(i) for i in obj]
         else:
             return obj
-        
 
     def get_ruleset_openapi(self, ruleset):
         """
@@ -245,7 +246,7 @@ class DecisionServerManager:
         except json.JSONDecodeError:
             self.logger.error("Failed to decode JSON response.")
 
-    def invokeDecisionService(self, rulesetPath, decisionInputs):
+    def invokeDecisionService(self, rulesetPath, decisionInputs, trace=True):
         """
         :no-index:
         Invokes a decision service with the provided ruleset path and decision inputs.
@@ -261,7 +262,8 @@ class DecisionServerManager:
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         
         params = {**decisionInputs}
-        # TODO: Add trace , **self.trace
+        if trace:
+            params.update(self.trace)  # Add trace information to params
         try:
             session = self.credentials.get_session()
             response = session.post(self.credentials.odm_url_runtime+'/rest'+rulesetPath, headers=headers,
@@ -274,15 +276,3 @@ class DecisionServerManager:
                 print(f"Request error, status: {response.status_code}")
         except requests.exceptions.RequestException as e:  
             return {"error": f"An error occurred when invoking the Decision Service: {e}"}
-    
-# Example usage:
-# For Basic Auth
-# manager = DecisionServerManager(odm_url='http://your_odm_url', username='your_username', password='your_password')
-
-# For Bearer Token
-# manager = DecisionServerManager(odm_url='http://your_odm_url', bearer_token='your_bearer_token')
-
-# For ZenAPIKey
-# manager = DecisionServerManager(odm_url='http://your_odm_url', zenapikey='your_zenapikey')
-
-# manager.fetch_rulesets()
