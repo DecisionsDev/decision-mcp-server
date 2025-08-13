@@ -85,7 +85,7 @@ class DiskTraceStorage:
     Maintains a limited number of traces by removing the oldest ones when limit is reached.
     """
     
-    def __init__(self, storage_dir: str = None, max_traces: int = 50):
+    def __init__(self, storage_dir: Optional[str] = None, max_traces: int = 50):
         """
         Initialize the disk-based trace storage.
         

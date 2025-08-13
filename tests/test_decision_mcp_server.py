@@ -23,7 +23,7 @@ def mock_server():
 
 @pytest.fixture
 def decision_server(mock_credentials, mock_server):
-    server = DecisionMCPServer(credentials=mock_credentials)
+    server = DecisionMCPServer(credentials=mock_credentials, traces_dir=None)
     server.server = mock_server
     server.manager = Mock()
     return server
@@ -52,6 +52,22 @@ def test_server_initialization(decision_server):
     (
         ["--client_id", "test-client", "--client_secret", "test-secret", "--token_url", "http://op/token", "--scope", "openid"],
         {"client_id": "test-client", "client_secret": "test-secret", "token_url": "http://op/token", "scope": "openid"}
+    ),
+    (
+        ["--traces-dir", "/custom/traces/dir"],
+        {"traces_dir": "/custom/traces/dir"}
+    ),
+    (
+        ["--trace-enable"],
+        {"trace_enable": True}  # Explicitly enabled
+    ),
+    (
+        ["--trace-maxsize", "100"],
+        {"trace_maxsize": 100}
+    ),
+    (
+        [],  # No arguments
+        {"trace_enable": False, "trace_maxsize": 50}  # Default values
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
@@ -149,12 +165,18 @@ def test_environment_variables():
     with patch.dict(os.environ, {
         'ODM_URL': 'http://env-test:9060/res',
         'ODM_USERNAME': 'env_user',
-        'ODM_PASSWORD': 'env_pass'
+        'ODM_PASSWORD': 'env_pass',
+        'TRACES_DIR': '/env/traces/dir',
+        'TRACE_ENABLE': 'True',  # Testing explicit enable since default is now False
+        'TRACE_MAXSIZE': '200'
     }), patch('sys.argv', ['script']):  # Added sys.argv patch
         args = parse_arguments()
         assert args.url == 'http://env-test:9060/res'
         assert args.username == 'env_user'
         assert args.password == 'env_pass'
+        assert args.traces_dir == '/env/traces/dir'
+        assert args.trace_enable == True  # Should be True because we set it explicitly
+        assert args.trace_maxsize == 200
 
 class DummyTool:
     def __init__(self, name, description, input_schema):
@@ -205,7 +227,7 @@ def server(mock_manager):
         username="test",
         password="test"
     )
-    server = DecisionMCPServer(credentials=credentials)
+    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=50)  # Explicitly enable traces for testing
     server.manager = mock_manager
     return server
 
@@ -319,3 +341,94 @@ async def test_call_tool_non_dict_response(server, mock_manager):
     assert len(result) == 1
     assert isinstance(result[0], types.TextContent)
     assert result[0].text == "string_response"
+
+# Test trace functionality with new parameters
+@pytest.fixture
+def server_with_traces_enabled():
+    credentials = Credentials(
+        odm_url="http://test:9060/res",
+        username="test",
+        password="test"
+    )
+    # Explicitly enable traces for testing
+    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=10)
+    server.manager = Mock()
+    return server
+
+@pytest.fixture
+def server_with_traces_disabled():
+    credentials = Credentials(
+        odm_url="http://test:9060/res",
+        username="test",
+        password="test"
+    )
+    # Default behavior is traces disabled, but we're explicit here for clarity in tests
+    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=False, trace_maxsize=10)
+    server.manager = Mock()
+    return server
+
+@pytest.mark.asyncio
+async def test_call_tool_with_traces_enabled(server_with_traces_enabled):
+    # Setup mock response
+    server_with_traces_enabled.manager.invokeDecisionService.return_value = {
+        "result": "decision_result",
+        "__DecisionID__": "123"
+    }
+    
+    # Setup test data
+    tool_name = "tool1"
+    arguments = {"input": "test_value"}
+    
+    # Add tool to repository
+    server_with_traces_enabled.repository[tool_name] = Mock(rulesetPath="/test/path")
+    
+    # Execute
+    result = await server_with_traces_enabled.call_tool(tool_name, arguments)
+    
+    # Verify trace storage was used
+    assert server_with_traces_enabled.execution_traces is not None
+    
+    # Verify response
+    assert len(result) == 1
+    assert result[0].type == "text"
+
+@pytest.mark.asyncio
+async def test_call_tool_with_traces_disabled(server_with_traces_disabled):
+    # Setup mock response
+    server_with_traces_disabled.manager.invokeDecisionService.return_value = {
+        "result": "decision_result",
+        "__DecisionID__": "123"
+    }
+    
+    # Setup test data
+    tool_name = "tool1"
+    arguments = {"input": "test_value"}
+    
+    # Add tool to repository
+    server_with_traces_disabled.repository[tool_name] = Mock(rulesetPath="/test/path")
+    
+    # Execute
+    result = await server_with_traces_disabled.call_tool(tool_name, arguments)
+    
+    # Verify trace storage was not used
+    assert server_with_traces_disabled.execution_traces is None
+    
+    # Verify response
+    assert len(result) == 1
+    assert result[0].type == "text"
+
+@pytest.mark.asyncio
+async def test_list_execution_traces_with_traces_disabled(server_with_traces_disabled):
+    # Execute
+    traces = await server_with_traces_disabled.list_execution_traces()
+    
+    # Verify empty list is returned when traces are disabled
+    assert len(traces) == 0
+
+@pytest.mark.asyncio
+async def test_get_execution_trace_with_traces_disabled(server_with_traces_disabled):
+    # Execute
+    trace = await server_with_traces_disabled.get_execution_trace("any_id")
+    
+    # Verify None is returned when traces are disabled
+    assert trace is None

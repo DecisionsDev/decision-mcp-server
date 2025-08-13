@@ -17,13 +17,21 @@ import argparse
 import os
 
 class DecisionMCPServer:
-    def __init__(self, credentials: Credentials):
+    def __init__(self, credentials: Credentials, traces_dir: Optional[str] = None, trace_enable: bool = False, trace_maxsize: int = 50):
         self.notes: dict[str, str] = {}
         self.repository: dict[str, DecisionServiceDescription] = {}
         
-        # Set up trace storage with default path in user's home directory
-        traces_dir = os.path.join(BASE_DIR, "traces")
-        self.execution_traces = DiskTraceStorage(storage_dir=traces_dir, max_traces=50)
+        # Store trace configuration
+        self.trace_enable = trace_enable
+        self.trace_maxsize = trace_maxsize
+        
+        # Set up trace storage with configured parameters if tracing is enabled
+        # If traces_dir is None, DiskTraceStorage will use the default path in user's home directory
+        if self.trace_enable:
+            self.execution_traces = DiskTraceStorage(storage_dir=traces_dir, max_traces=self.trace_maxsize)
+        else:
+            self.execution_traces = None
+            logging.info("Trace storage is disabled")
         
         self.server = Server("decision-mcp-server")
         self.manager = None
@@ -113,19 +121,22 @@ class DecisionMCPServer:
             # Handle non-dict response (string, etc)
             response_text = str(result)
 
-        # Create and store execution trace
-        trace = ExecutionToolTrace(
-            tool_name=name,
-            ruleset_path=self.repository[name].rulesetPath,
-            inputs=arguments or {},
-            results=result,
-            decision_id=decision_id,
-            decision_trace=decision_trace
-        )
-        trace_id = self.execution_traces.add(trace)
-        
-        # Log the creation of the trace
-        logging.info(f"Created execution trace with ID: {trace_id}")
+        # Create and store execution trace if tracing is enabled
+        if self.trace_enable and self.execution_traces is not None:
+            trace = ExecutionToolTrace(
+                tool_name=name,
+                ruleset_path=self.repository[name].rulesetPath,
+                inputs=arguments or {},
+                results=result,
+                decision_id=decision_id,
+                decision_trace=decision_trace
+            )
+            trace_id = self.execution_traces.add(trace)
+            
+            # Log the creation of the trace
+            logging.info(f"Created execution trace with ID: {trace_id}")
+        else:
+            logging.debug("Trace storage is disabled, not creating execution trace")
 
         return [
             types.TextContent(
@@ -137,6 +148,10 @@ class DecisionMCPServer:
     # Add a new method to list execution traces
     async def list_execution_traces(self) -> list[types.Resource]:
         """Return a list of execution traces as resources."""
+        if not self.trace_enable or self.execution_traces is None:
+            logging.info("Trace storage is disabled, returning empty list")
+            return []
+            
         trace_metadata = self.execution_traces.get_all_metadata()
         return [
             types.Resource(
@@ -151,6 +166,10 @@ class DecisionMCPServer:
     # Add a method to get a specific execution trace
     async def get_execution_trace(self, trace_id: str) -> Optional[ExecutionToolTrace]:
         """Get a specific execution trace by ID."""
+        if not self.trace_enable or self.execution_traces is None:
+            logging.info("Trace storage is disabled, cannot retrieve trace")
+            return None
+            
         return self.execution_traces.get(trace_id)
 
     async def start(self):
@@ -192,6 +211,11 @@ def parse_arguments():
     parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
     parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+    
+    # Trace-related arguments
+    parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
+    parser.add_argument("--trace-enable", action="store_true", default=(os.getenv("TRACE_ENABLE", "False").lower() == "true"), help="Enable trace storage (default: False)")
+    parser.add_argument("--trace-maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
             
 
     return parser.parse_args()
@@ -231,5 +255,10 @@ async def main():
     """Main entry point for the Decision MCP Server."""
     args = parse_arguments()
     credentials = create_credentials(args)
-    server = DecisionMCPServer(credentials=credentials)
+    server = DecisionMCPServer(
+        credentials=credentials,
+        traces_dir=args.traces_dir,
+        trace_enable=args.trace_enable,
+        trace_maxsize=args.trace_maxsize
+    )
     await server.start()

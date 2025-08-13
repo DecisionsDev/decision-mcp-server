@@ -113,66 +113,16 @@ class DecisionServerManager:
         return highest_version_rulesets
     
 
-    def to_plain_dict(self, obj, _visited=None):
+    def to_plain_dict(self,obj):
         """
         Recursively convert a jsonref.JsonRef structure to a plain JSON-serializable dict.
-        
-        This method handles circular references and provides detailed type conversion
-        for complex nested structures containing dictionaries and lists.
-        
-        Args:
-            obj: The object to convert (can be a jsonref.JsonRef, dict, list, or primitive type)
-            _visited: Internal parameter to track visited objects and prevent circular reference issues
-            
-        Returns:
-            dict, list, or primitive: A JSON-serializable version of the input object
-            
-        Raises:
-            TypeError: If an unsupported or non-serializable type is encountered
         """
-        # Initialize visited objects tracking on first call
-        if _visited is None:
-            _visited = set()
-            
-        # Handle None values
-        if obj is None:
-            return None
-            
-        # Get object id to detect circular references
-        obj_id = id(obj)
-        
-        # Check for circular references
-        if hasattr(obj, '__dict__') and obj_id in _visited:
-            return f"<Circular reference to {type(obj).__name__} object>"
-        
-        # Add complex objects to visited set
-        if hasattr(obj, '__dict__'):
-            _visited.add(obj_id)
-        
-        try:
-            # Handle dictionaries
-            if isinstance(obj, dict):
-                return {k: self.to_plain_dict(v, _visited) for k, v in obj.items()}
-            # Handle lists
-            elif isinstance(obj, list):
-                return [self.to_plain_dict(i, _visited) for i in obj]
-            # Handle jsonref.JsonRef objects (explicit check)
-            elif hasattr(obj, '__reference__'):
-                # Extract the dereferenced value
-                return self.to_plain_dict(obj.__subject__, _visited)
-            # Handle basic JSON-serializable types
-            elif isinstance(obj, (str, int, float, bool)) or obj is None:
-                return obj
-            # Handle other objects that might have a to_dict method
-            elif hasattr(obj, 'to_dict'):
-                return self.to_plain_dict(obj.to_dict(), _visited)
-            # Fall back to string representation for non-serializable types
-            else:
-                return str(obj)
-        except Exception as e:
-            self.logger.warning(f"Error converting object to plain dict: {e}")
-            return str(obj)
-
+        if isinstance(obj, dict):
+            return {k: self.to_plain_dict(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self.to_plain_dict(i) for i in obj]
+        else:
+            return obj
 
     def get_ruleset_openapi(self, ruleset):
         """
@@ -327,15 +277,3 @@ class DecisionServerManager:
                 print(f"Request error, status: {response.status_code}")
         except requests.exceptions.RequestException as e:  
             return {"error": f"An error occurred when invoking the Decision Service: {e}"}
-    
-# Example usage:
-# For Basic Auth
-# manager = DecisionServerManager(odm_url='http://your_odm_url', username='your_username', password='your_password')
-
-# For Bearer Token
-# manager = DecisionServerManager(odm_url='http://your_odm_url', bearer_token='your_bearer_token')
-
-# For ZenAPIKey
-# manager = DecisionServerManager(odm_url='http://your_odm_url', zenapikey='your_zenapikey')
-
-# manager.fetch_rulesets()
