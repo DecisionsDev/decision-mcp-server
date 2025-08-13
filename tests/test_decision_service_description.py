@@ -20,15 +20,13 @@ def test_decision_service_description_initialization():
     ruleset = {"id": "ruleset1", "description": "A test ruleset"}
     description = "A tool description"  # This should be a string
     input_schema = {"type": "object", "properties": {"foo": {"type": "string"}}}
-    callback_name = "callback_func"
 
-    # Correct order of parameters: tool_name, ruleset, description, input_schema, callback_name
-    desc = DecisionServiceDescription(tool_name, ruleset, description, input_schema, callback_name)
+    # Correct order of parameters: tool_name, ruleset, description, input_schema
+    desc = DecisionServiceDescription(tool_name, ruleset, description, input_schema)
     
     assert desc.tool_name == tool_name
     assert desc.description == description
     assert desc.rulesetPath == "/ruleset1"
-    assert desc.callbackName == callback_name
     assert desc.ruleset == ruleset
     assert desc.tool_description.name == tool_name
     assert desc.tool_description.description == description

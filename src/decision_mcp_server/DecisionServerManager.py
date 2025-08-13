@@ -212,11 +212,10 @@ class DecisionServerManager:
         for ruleset in filtered_rulesets.values():
 
             input_schema = self.get_input_schema(ruleset)
-            callbackName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.callback"), None)
             toolName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.name"), ruleset["displayName"]).replace(" ", "_").lower()
             toolDescription = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.description"), ruleset["description"])
              # Define a class to hold the formatted ruleset data
-            formatted_ruleset = DecisionServiceDescription(toolName, ruleset, toolDescription, input_schema,callbackName)
+            formatted_ruleset = DecisionServiceDescription(toolName, ruleset, toolDescription, input_schema)
             formatted_tools.append(formatted_ruleset)
         return formatted_tools
 
