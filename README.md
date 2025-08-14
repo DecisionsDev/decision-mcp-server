@@ -159,7 +159,7 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 
 The Watson Orchestrate ADK integration allows you to connect the Decision MCP Server to Watson Orchestrate for dynamic decision-making workflows.
 
-For detailed instructions, see the [Watson Orchestrate ADK Integration Guide](docs/watson_orchestrate_adk.md).
+For detailed instructions, see the [Watson Orchestrate ADK Integration Guide](docs/watson-orchestrate-adk-guide.md).
 
 ---
 
