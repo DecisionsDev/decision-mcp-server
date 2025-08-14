@@ -65,8 +65,7 @@ class DecisionServerManager:
             headers (dict): Headers obtained from credentials.
             trace (dict): Trace configuration for logging rule firing information.
         """
-        # Configure logging
-        logging.basicConfig(level=logging.INFO)
+        # Get logger for this class
         self.logger = logging.getLogger(__name__)
 
         # Initialize with provided credentials
@@ -272,7 +271,7 @@ class DecisionServerManager:
             if response.status_code == 200:
                 return response.json()
             else:
-                print(f"Request error, status: {response.status_code}")
+                logging.error(f"Request error, status: {response.status_code}")
         except requests.exceptions.RequestException as e:  
             return {"error": f"An error occurred when invoking the Decision Service: {e}"}
     

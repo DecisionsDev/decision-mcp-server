@@ -212,6 +212,11 @@ def parse_arguments():
     parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
     
+    # Logging-related arguments
+    parser.add_argument("--log-level", type=str, default=os.getenv("LOG_LEVEL", "INFO"),
+                        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                        help="Set the logging level (default: INFO)")
+    
     # Trace-related arguments
     parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
     parser.add_argument("--trace-enable", action="store_true", default=(os.getenv("TRACE_ENABLE", "False").lower() == "true"), help="Enable trace storage (default: False)")
@@ -254,6 +259,26 @@ def create_credentials(args):
 async def main():
     """Main entry point for the Decision MCP Server."""
     args = parse_arguments()
+    
+    # Configure logging with the specified level
+    try:
+        logging_level = getattr(logging, args.log_level)
+    except AttributeError:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        logging.warning(f"Invalid log level '{args.log_level}' specified. Falling back to INFO.")
+        logging_level = logging.INFO
+    else:
+        logging.basicConfig(
+            level=logging_level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+    logging.info(f"Logging level set to: {logging.getLevelName(logging_level)}")
+    
     credentials = create_credentials(args)
     server = DecisionMCPServer(
         credentials=credentials,
