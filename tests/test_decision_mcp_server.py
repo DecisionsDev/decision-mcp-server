@@ -58,8 +58,12 @@ def test_server_initialization(decision_server):
         {"traces_dir": "/custom/traces/dir"}
     ),
     (
-        ["--trace-enable"],
-        {"trace_enable": True}  # Explicitly enabled
+        ["--trace-enable", "True"],
+        {"trace_enable": "True"}  # Explicitly enabled
+    ),
+    (
+        ["--trace-enable", "False"],
+        {"trace_enable": "False"}  # Explicitly disabled
     ),
     (
         ["--trace-maxsize", "100"],
@@ -71,7 +75,7 @@ def test_server_initialization(decision_server):
     ),
     (
         [],  # No arguments
-        {"trace_enable": False, "trace_maxsize": 50, "log_level": "INFO"}  # Default values
+        {"trace_enable": "False", "trace_maxsize": 50, "log_level": "INFO"}  # Default values
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
@@ -184,7 +188,7 @@ def test_environment_variables():
         assert args.username == 'env_user'
         assert args.password == 'env_pass'
         assert args.traces_dir == '/env/traces/dir'
-        assert args.trace_enable is True  # Should be True because we set it explicitly
+        assert args.trace_enable == "True"  # Should be "True" string because we set it explicitly
         assert args.trace_maxsize == 200
         assert args.log_level == 'DEBUG'
 

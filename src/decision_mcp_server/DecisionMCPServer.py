@@ -220,7 +220,7 @@ def parse_arguments():
     
     # Trace-related arguments
     parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
-    parser.add_argument("--trace-enable", action="store_true", default=(os.getenv("TRACE_ENABLE", "False").lower() == "true"), help="Enable trace storage (default: False)")
+    parser.add_argument("--trace-enable", type=str, default=os.getenv("TRACE_ENABLE", "False"), choices=["True", "False"], help="Enable trace storage. Default is False (trace storage disabled).")
     parser.add_argument("--trace-maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
             
 
@@ -284,10 +284,13 @@ async def main():
     logging.info(f"Logging level set to: {logging.getLevelName(logging_level)}")
     
     credentials = create_credentials(args)
+    # Convert trace_enable from string to boolean
+    trace_enable = args.trace_enable != "False"
+    
     server = DecisionMCPServer(
         credentials=credentials,
         traces_dir=args.traces_dir,
-        trace_enable=args.trace_enable,
+        trace_enable=trace_enable,
         trace_maxsize=args.trace_maxsize
     )
     await server.start()
