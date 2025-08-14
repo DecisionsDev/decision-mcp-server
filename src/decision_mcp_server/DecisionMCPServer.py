@@ -235,6 +235,7 @@ def create_credentials(args):
             odm_url_runtime=args.runtime_url,
             username=args.username,
             zenapikey=args.zenapikey,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
     elif args.client_id:  # If OpenID credentials are provided, use them for authentication
@@ -245,6 +246,7 @@ def create_credentials(args):
             scope=args.scope,
             client_id=args.client_id,
             client_secret=args.client_secret,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
     else:  # Default to basic authentication
@@ -255,6 +257,7 @@ def create_credentials(args):
             odm_url_runtime=args.runtime_url,
             username=args.username,
             password=args.password,
+            ssl_cert_path=args.ssl_cert_path,
             verify_ssl=verifyssl
         )
 async def main():
