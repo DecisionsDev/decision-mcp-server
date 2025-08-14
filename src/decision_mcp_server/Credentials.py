@@ -1,8 +1,28 @@
 import requests
+from requests.adapters import HTTPAdapter
+import ssl
 from validator_collection import  checkers
 import base64
 import logging
 import json
+
+class CustomHTTPAdapter(HTTPAdapter):
+    """
+    A class that modifies the default behaviour with regards to certificates in order to
+        - accept self-signed certificates
+        - skip hostname verification
+    """
+    def __init__(self, certfile=None):
+         self.certfile = certfile
+         HTTPAdapter.__init__(self)
+         
+    def init_poolmanager(self, *args, **kwargs):
+        context = ssl.create_default_context(cafile = self.certfile)
+        context.verify_flags = ssl.VERIFY_ALLOW_PROXY_CERTS | ssl.VERIFY_X509_TRUSTED_FIRST | ssl.VERIFY_X509_PARTIAL_CHAIN
+        kwargs['ssl_context'] = context
+        kwargs['assert_hostname'] = False
+        return super().init_poolmanager(*args, **kwargs)
+
 class Credentials:
     """
     A class to handle credentials for accessing an ODM (Operational Decision Manager) service.
@@ -49,7 +69,6 @@ class Credentials:
            logging.info("Using provided runtime URL: " + odm_url_runtime)
            self.odm_url_runtime=odm_url_runtime.rstrip('/')  
         else:
-
             self.odm_url_runtime=self.odm_url
                 # Check if the URL ends with 'res' and replace it with 'DecisionService'
             if self.odm_url_runtime.endswith('res'):
@@ -57,6 +76,13 @@ class Credentials:
             logging.info("No runtime URL provided, using odm_url as root runtime URL."+self.odm_url_runtime)
         if not checkers.is_url(self.odm_url):
             raise ValueError("'"+self.odm_url+"' is not a valid URL")
+
+        if verify_ssl:
+            import certifi
+            self.cacert = certifi.where()
+        else:
+            self.cacert = None
+
         self.username = username
         self.password = password
         self.token_url = token_url
@@ -89,7 +115,10 @@ class Credentials:
                 'scope':       self.scope,
             }
             auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
-            response = requests.post(self.token_url, data=data, auth=auth)
+            if self.verify_ssl:
+                response = requests.post(self.token_url, data=data, auth=auth, verify=self.cacert)
+            else:
+                response = requests.post(self.token_url, data=data, auth=auth, verify=False)
             response.raise_for_status() # raise an HTTPError if the request failed
             token_data = response.json()
             access_token = token_data['access_token']
@@ -115,16 +144,15 @@ class Credentials:
         """ 
         session = requests.Session()
         logging.info("Verify SSL: " + str(self.verify_ssl))
-        if self.odm_url.startswith('https'):
-            if self.verify_ssl:
-                session.verify = self.ssl_cert_path if self.ssl_cert_path else True
-            else:
-                import urllib3
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                session.verify = False
+        if self.odm_url.startswith('https') and self.verify_ssl:
+            session.verify = True
+            session.mount('https://', CustomHTTPAdapter(certfile = self.ssl_cert_path))
+        else:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            session.verify = False
         
         headers = self.get_auth()
-
         session.headers.update(headers)
         logging.info(f"Session created with URL: {self.odm_url}, Runtime URL: {self.odm_url_runtime} with headers: {session.headers}")
 #        print("Session created with headers:", session.headers)
