@@ -144,7 +144,7 @@ class DecisionServerManager:
                 # Make the GET request with headers
                 self.logger.info("Retrieve OpenAPI schema at "+self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi')
                 session = self.credentials.get_session()
-                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=self.headers)
+                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=self.headers, verify=self.credentials.cacert)
 
 
                 # Check if the request was successful
@@ -223,7 +223,7 @@ class DecisionServerManager:
             # Make the GET request with headers
             self.logger.info(self.credentials.odm_url+'/api/v1/ruleapps')
             session = self.credentials.get_session()
-            response = session.get(self.credentials.odm_url+'/api/v1/ruleapps', headers=self.headers)
+            response = session.get(self.credentials.odm_url+'/api/v1/ruleapps', headers=self.headers, verify=self.credentials.cacert)
 
             # Check if the request was successful
             if response.status_code == 200:
