@@ -220,7 +220,7 @@ def parse_arguments():
     
     # Trace-related arguments
     parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
-    parser.add_argument("--trace-enable", action="store_true", default=(os.getenv("TRACE_ENABLE", "False").lower() == "true"), help="Enable trace storage (default: False)")
+    parser.add_argument("--trace-enable", type=str, default=os.getenv("TRACE_ENABLE", "False"), help="Enable trace storage (default: False)")
     parser.add_argument("--trace-maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
             
 
