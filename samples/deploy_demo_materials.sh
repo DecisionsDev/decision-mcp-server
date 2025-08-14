@@ -87,5 +87,5 @@ import_and_deploy_decision_service() {
 # ----------------------------------
 
 # You can repeat the line below for other decision services
-import_and_deploy_decision_service "targeted_advertising" "deployment" "advertising_project.zip"
-import_and_deploy_decision_service "hr_decision_service" "deployment" "vacation_project.zip" 
+import_and_deploy_decision_service "Beauty Advisory Service" "deployment" "Beauty_Advisory_Service.zip"
+import_and_deploy_decision_service "Vacation Service" "deployment" "Vacation_Service.zip" 
