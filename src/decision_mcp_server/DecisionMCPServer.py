@@ -275,7 +275,22 @@ async def main():
         level=logging_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    try:
+        logging_level = getattr(logging, args.log_level)
+    except AttributeError:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        logging.warning(f"Invalid log level '{args.log_level}' specified. Falling back to INFO.")
+        logging_level = logging.INFO
+    else:
+        logging.basicConfig(
+            level=logging_level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
     logging.info(f"Logging level set to: {logging.getLevelName(logging_level)}")
     
     credentials = create_credentials(args)
