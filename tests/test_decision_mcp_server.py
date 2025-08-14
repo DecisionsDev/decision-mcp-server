@@ -66,8 +66,12 @@ def test_server_initialization(decision_server):
         {"trace_maxsize": 100}
     ),
     (
+        ["--log-level", "DEBUG"],
+        {"log_level": "DEBUG"}  # Test log level argument
+    ),
+    (
         [],  # No arguments
-        {"trace_enable": False, "trace_maxsize": 50}  # Default values
+        {"trace_enable": False, "trace_maxsize": 50, "log_level": "INFO"}  # Default values
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
@@ -168,7 +172,8 @@ def test_environment_variables():
         'ODM_PASSWORD': 'env_pass',
         'TRACES_DIR': '/env/traces/dir',
         'TRACE_ENABLE': 'True',  # Testing explicit enable since default is now False
-        'TRACE_MAXSIZE': '200'
+        'TRACE_MAXSIZE': '200',
+        'LOG_LEVEL': 'DEBUG'
     }), patch('sys.argv', ['script']):  # Added sys.argv patch
         args = parse_arguments()
         assert args.url == 'http://env-test:9060/res'
@@ -177,6 +182,7 @@ def test_environment_variables():
         assert args.traces_dir == '/env/traces/dir'
         assert args.trace_enable == True  # Should be True because we set it explicitly
         assert args.trace_maxsize == 200
+        assert args.log_level == 'DEBUG'
 
 class DummyTool:
     def __init__(self, name, description, input_schema):
