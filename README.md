@@ -99,8 +99,8 @@ This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Devel
 Once Claude Desktop is configured with the MCP Server, it automatically connects to the ODM Developer Edition. The MCP Server retrieves and exposes the available decision services as Claude tools.
 
 ✅ You should see both tools listed in Claude's interface:
-- `computeVacation`
-- `beautyAdvice`
+- `compute_vcation`
+- `beauty_advice`
 
 ![Screenshot showing Claude tools](docs/claude-mcp-tools.png)
 
@@ -153,6 +153,18 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 - This scenario demonstrates how Claude can dynamically interact with multiple decision services.
 - The tools are exposed automatically by the MCP Server based on the ODM configuration.
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
+- Watch our demo video:
+
+<video width="640" height="360" controls>
+  <source src="docs/Claude.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+- Watch our demo video:
+
+<video width="640" height="360" controls>
+  <source src="docs/Claude.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ---
 ## Watson Orchestrate ADK Integration
@@ -447,7 +459,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
-- [ ] Record demo video for Claude Desktop integration
+- [x] Record demo video for Claude Desktop integration
 - [x] Add a docker-compose to inject to deploy the ruleapps.
 - [x] Support configuration via CLI and environment variables
 - [x] Verify Zen authentication support
