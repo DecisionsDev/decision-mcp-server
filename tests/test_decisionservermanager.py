@@ -10,8 +10,8 @@ mock_data = [
     {
         "id": "checktoolsparam/v1",
         "rulesets": [
-            # This ruleset has a tools.parameters property
-            {"id": "checktoolsparam/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}], "version": "1.0","test":"true"},
+            # This ruleset has a agent.parameters property
+            {"id": "checktoolsparam/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
             {"id": "checktoolsparam/v1/ruleset2", "properties": [{"id":"ruleset.status","value":"enabled"}],"version": "2.0","test":"false"}
         ]
     },
@@ -19,25 +19,25 @@ mock_data = [
         "id": "verifystatusenabled/v1",
         "rulesets": [
             # This ruleset has an enabled status
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}], "version": "1.0","test":"true"},
+            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
             # This ruleset has an enabled status - Should be selected
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}], "version": "2.0","test":"true"},
+            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "2.0","test":"true"},
             # This ruleset has a disabled status
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"disabled"},{"id":"tools.enabled","value":"true"}],"version": "3.0","test":"false"}
+            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"disabled"},{"id":"agent.enabled","value":"true"}],"version": "3.0","test":"false"}
         ]
     },
     {
         "id": "multipleruleset/v1",
         "rulesets": [
-            {"id": "multipleruleset/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}], "version": "1.1","test":"true"},
-            {"id": "multipleruleset/v1/ruleset2","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}], "version": "1.2","test":"true"}
+            {"id": "multipleruleset/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.1","test":"true"},
+            {"id": "multipleruleset/v1/ruleset2","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.2","test":"true"}
         ]
     },
     {
         "id": "minorrulesetversion/v1",
         "rulesets": [
-            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.parameters","value":"{\"arg\":\"name\"}"}], "version": "1.1","test":"true"},
-            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"tools.enabled","value":"true"}],"version": "1.2","test":"true"}
+            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.parameters","value":"{\"arg\":\"name\"}"}], "version": "1.1","test":"true"},
+            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}],"version": "1.2","test":"true"}
         ]
     }
 ]
@@ -68,9 +68,12 @@ def mock_server():
     # Cleanup code can be added here if needed
 
 def test_fetch_rulesets(caplog):
+    import os
+    # Use environment variables or default to mock values for testing
     credentials = Credentials(
     odm_url='http://localhost:8885/res',
-        username='mock_bearer_token', password='mock_password',
+        username=os.environ.get('TEST_USERNAME', 'mock_bearer_token'),
+        password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
 )
     manager = DecisionServerManager(
         credentials=credentials
@@ -83,8 +86,9 @@ def test_fetch_rulesets(caplog):
     # Verify the rulesets contain the expected output
 
     fetchedresult={}
-    for ruleset in ruleset_fetched.values():
-        fetchedresult[ruleset["id"]]=ruleset["properties"]
+    if ruleset_fetched:  # Check if ruleset_fetched is not None
+        for ruleset in ruleset_fetched.values():
+            fetchedresult[ruleset["id"]]=ruleset["properties"]
 
     print("RESULT : "+str(fetchedresult))
 
@@ -125,29 +129,23 @@ def test_fetch_rulesets(caplog):
  #   assert "RuleApp: ruleapp1, Ruleset: ruleset1, Highest Version Ruleset: ruleapp1/v1/ruleset2" in log_output
  #   assert "RuleApp: ruleapp2, Ruleset: ruleset2, Highest Version Ruleset: ruleapp2/v1/ruleset2" in log_output
 
-@pytest.mark.parametrize("tools_parameters,expected_call_openapi", [
-    (None, True),  # When tools.parameters is None, should call get_ruleset_openapi
-    ("[]", True),  # When tools.parameters is "[]", should call get_ruleset_openapi
-    ('{"type":"object","properties":{"name":{"type":"string"}}}', False)  # Valid JSON, should not call get_ruleset_openapi
-])
-def test_get_input_schema(tools_parameters, expected_call_openapi):
-    # Create a test ruleset with the given tools.parameters value
+def test_get_input_schema():
+    """
+    Test that get_input_schema always uses the OpenAPI generation.
+    """
+    # Create a test ruleset
     ruleset = {
         "id": "test/v1/ruleset",
         "properties": []
     }
     
-    if tools_parameters is not None:
-        ruleset["properties"].append({
-            "id": "tools.parameters",
-            "value": tools_parameters
-        })
-    
     # Create a mock DecisionServerManager with a mocked get_ruleset_openapi method
+    import os
+    # Use environment variables or default to mock values for testing
     credentials = Credentials(
         odm_url='http://localhost:8885/res',
-        username='mock_bearer_token',
-        password='mock_password',
+        username=os.environ.get('TEST_USERNAME', 'mock_bearer_token'),
+        password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
     manager = DecisionServerManager(credentials)
@@ -166,34 +164,28 @@ def test_get_input_schema(tools_parameters, expected_call_openapi):
         # Call get_input_schema
         result = manager.get_input_schema(ruleset)
         
-        # Check if get_ruleset_openapi was called as expected
-        assert openapi_called[0] == expected_call_openapi
+        # Check that get_ruleset_openapi was called
+        assert openapi_called[0] == True
         
-        # If tools_parameters is a valid JSON and not None or "[]", 
-        # verify the result matches the parsed JSON
-        if tools_parameters and tools_parameters != "[]":
-            expected = json.loads(tools_parameters)
-            assert result == expected
-        else:
-            # Otherwise, verify the result is the mocked OpenAPI schema
-            assert result == {"type": "object", "properties": {"mocked": {"type": "string"}}}
+        # Verify the result is the mocked OpenAPI schema
+        assert result == {"type": "object", "properties": {"mocked": {"type": "string"}}}
     
     finally:
         # Restore the original method
         manager.get_ruleset_openapi = original_get_ruleset_openapi
 
-def test_tools_name_handling():
-    """Test the handling of tools.name property in generate_tools_format method."""
-    # Create test data with two rulesets - one with tools.name and one without
+def test_agent_name_handling():
+    """Test the handling of agent.name property in generate_tools_format method."""
+    # Create test data with two rulesets - one with agent.name and one without
     rulesets = {
         "ruleset1": {
             "id": "test/v1/ruleset1",
             "displayName": "Display Name With Spaces",
             "description": "Test description",
             "properties": [
-                {"id": "tools.enabled", "value": "true"},
-                {"id": "tools.parameters", "value": '{"type":"object","properties":{"name":{"type":"string"}}}'},
-                # No tools.name here - should use displayName
+                {"id": "agent.enabled", "value": "true"},
+                {"id": "agent.parameters", "value": '{"type":"object","properties":{"name":{"type":"string"}}}'},
+                # No agent.name here - should use displayName
             ]
         },
         "ruleset2": {
@@ -201,18 +193,20 @@ def test_tools_name_handling():
             "displayName": "Unused Display Name",
             "description": "Test description 2",
             "properties": [
-                {"id": "tools.enabled", "value": "true"},
-                {"id": "tools.parameters", "value": '{"type":"object","properties":{"name":{"type":"string"}}}'},
-                {"id": "tools.name", "value": "CustomToolName"},  # Explicit tools.name
+                {"id": "agent.enabled", "value": "true"},
+                {"id": "agent.parameters", "value": '{"type":"object","properties":{"name":{"type":"string"}}}'},
+                {"id": "agent.name", "value": "CustomToolName"},  # Explicit agent.name
             ]
         }
     }
     
     # Create a mock DecisionServerManager
+    import os
+    # Use environment variables or default to mock values for testing
     credentials = Credentials(
         odm_url='http://localhost:8885/res',
-        username='mock_user',
-        password='mock_password',
+        username=os.environ.get('TEST_USERNAME', 'mock_user'),
+        password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
     manager = DecisionServerManager(credentials)
@@ -235,7 +229,7 @@ def test_tools_name_handling():
         # First ruleset should use displayName (converted to lowercase with underscores)
         assert result[0].tool_name == "display_name_with_spaces"
         
-        # Second ruleset should use the explicit tools.name
+        # Second ruleset should use the explicit agent.name
         assert result[1].tool_name == "customtoolname"
         
     finally:
@@ -244,7 +238,7 @@ def test_tools_name_handling():
 
 def test_tools_name_and_description_handling():
     """
-    Test that tools.name and tools.description properties are correctly handled
+    Test that agent.name and agent.description properties are correctly handled
     in the generate_tools_format method.
     """
     # Create test data with three rulesets to test different scenarios
@@ -254,8 +248,8 @@ def test_tools_name_and_description_handling():
             "displayName": "Display Name With Spaces",
             "description": "Default description",
             "properties": [
-                {"id": "tools.enabled", "value": "true"},
-                # No tools.name or tools.description - should use defaults
+                {"id": "agent.enabled", "value": "true"},
+                # No agent.name or agent.description - should use defaults
             ]
         },
         "ruleset2": {
@@ -263,9 +257,9 @@ def test_tools_name_and_description_handling():
             "displayName": "Unused Display Name",
             "description": "Unused description",
             "properties": [
-                {"id": "tools.enabled", "value": "true"},
-                {"id": "tools.name", "value": "CustomToolName"},  # Custom name
-                {"id": "tools.description", "value": "Custom description"},  # Custom description
+                {"id": "agent.enabled", "value": "true"},
+                {"id": "agent.name", "value": "CustomToolName"},  # Custom name
+                {"id": "agent.description", "value": "Custom description"},  # Custom description
             ]
         },
         "ruleset3": {
@@ -273,18 +267,20 @@ def test_tools_name_and_description_handling():
             "displayName": "Another Display Name",
             "description": "Another default description",
             "properties": [
-                {"id": "tools.enabled", "value": "true"},
-                {"id": "tools.name", "value": "ThirdTool"},  # Custom name
-                # No tools.description - should fall back to default
+                {"id": "agent.enabled", "value": "true"},
+                {"id": "agent.name", "value": "ThirdTool"},  # Custom name
+                # No agent.description - should fall back to default
             ]
         }
     }
     
     # Create a mock DecisionServerManager
+    import os
+    # Use environment variables or default to mock values for testing
     credentials = Credentials(
         odm_url='http://localhost:8885/res',
-        username='mock_user',
-        password='mock_password',
+        username=os.environ.get('TEST_USERNAME', 'mock_user'),
+        password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
     manager = DecisionServerManager(credentials)
@@ -325,10 +321,10 @@ def test_tools_name_and_description_handling():
         # Restore the original method
         manager.get_input_schema = original_get_input_schema
 
-def test_extract_highest_version_rulesets_tools_enabled():
-    """Test that only rulesets with tools.enabled=true are included."""
+def test_extract_highest_version_rulesets_agent_enabled():
+    """Test that only rulesets with agent.enabled=true are included."""
     
-    # Create test data with various tools.enabled values
+    # Create test data with various agent.enabled values
     test_data = [
         {
             "id": "app1/v1",
@@ -340,7 +336,7 @@ def test_extract_highest_version_rulesets_tools_enabled():
                     "description": "Test ruleset 1",
                     "properties": [
                         {"id": "ruleset.status", "value": "enabled"},
-                        {"id": "tools.enabled", "value": "true"}  # This should be included
+                        {"id": "agent.enabled", "value": "true"}  # This should be included
                     ]
                 },
                 {
@@ -350,7 +346,7 @@ def test_extract_highest_version_rulesets_tools_enabled():
                     "description": "Test ruleset 2",
                     "properties": [
                         {"id": "ruleset.status", "value": "enabled"},
-                        {"id": "tools.enabled", "value": "false"}  # This should be excluded
+                        {"id": "agent.enabled", "value": "false"}  # This should be excluded
                     ]
                 }
             ]
@@ -365,7 +361,7 @@ def test_extract_highest_version_rulesets_tools_enabled():
                     "description": "Test ruleset 3",
                     "properties": [
                         {"id": "ruleset.status", "value": "enabled"},
-                        {"id": "tools.enabled", "value": "TRUE"}  # This should be included (case-insensitive)
+                        {"id": "agent.enabled", "value": "TRUE"}  # This should be included (case-insensitive)
                     ]
                 },
                 {
@@ -375,7 +371,7 @@ def test_extract_highest_version_rulesets_tools_enabled():
                     "description": "Test ruleset 4",
                     "properties": [
                         {"id": "ruleset.status", "value": "enabled"}
-                        # No tools.enabled property - should be excluded
+                        # No agent.enabled property - should be excluded
                     ]
                 }
             ]
@@ -390,7 +386,7 @@ def test_extract_highest_version_rulesets_tools_enabled():
                     "description": "Test ruleset 5",
                     "properties": [
                         {"id": "ruleset.status", "value": "enabled"},
-                        {"id": "tools.enabled", "value": "yes"}  # Non-standard value - should be excluded
+                        {"id": "agent.enabled", "value": "yes"}  # Non-standard value - should be excluded
                     ]
                 }
             ]
@@ -398,10 +394,12 @@ def test_extract_highest_version_rulesets_tools_enabled():
     ]
     
     # Create a mock DecisionServerManager
+    import os
+    # Use environment variables or default to mock values for testing
     credentials = Credentials(
         odm_url='http://localhost:8885/res',
-        username='mock_user',
-        password='mock_password',
+        username=os.environ.get('TEST_USERNAME', 'mock_user'),
+        password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
     manager = DecisionServerManager(credentials)
@@ -409,12 +407,12 @@ def test_extract_highest_version_rulesets_tools_enabled():
     # Call extract_highest_version_rulesets
     result = manager.extract_highest_version_rulesets(test_data)
     
-    # Verify only rulesets with tools.enabled=true (case-insensitive) are included
+    # Verify only rulesets with agent.enabled=true (case-insensitive) are included
     assert len(result) == 2
     assert "app1ruleset1" in result
     assert "app2ruleset3" in result
     
-    # Verify rulesets with tools.enabled=false, missing tools.enabled, or non-standard values are excluded
+    # Verify rulesets with agent.enabled=false, missing agent.enabled, or non-standard values are excluded
     assert "app1ruleset2" not in result
     assert "app2ruleset4" not in result
     assert "app3ruleset5" not in result

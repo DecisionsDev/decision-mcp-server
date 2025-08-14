@@ -211,6 +211,7 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
 | `--ssl_cert_path` | `SSL_CERT_PATH`     | Path to the SSL certificate file. If not provided, defaults to system certificates.                     |                                         |
+| `--log-level`     | `LOG_LEVEL`         | Set the logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`)                                 | `INFO`                                  |
 | `--traces-dir`    | `TRACES_DIR`        | Directory to store execution traces                                                                     | `~/.mcp-server/traces`                  |
 | `--trace-enable`  | `TRACE_ENABLE`      | Enable or disable trace storage (`True` or `False`)                                                     | `False`                                 |
 | `--trace-maxsize` | `TRACE_MAXSIZE`     | Maximum number of traces to store before removing oldest traces                                          | `50`                                    |
@@ -337,15 +338,15 @@ You can add ruleset properties using any of these methods:
 #### MCP Configuration Properties
 Property | Description | Default |
 |-------------------|--------------------------------------------------------------------------|------------------------------------------|
-`tools.enabled`     | Controls whether the ruleset is exposed as an MCP tool                   | `false`                                  |
-`tools.name`        | Customizes the name of the tool as exposed to AI assistants              | Name of the decision operation. Display Name in the Decision Server console. |
-`tools.description` | Overrides the default description of the ruleset when exposed as a tool  | Description of the decision operation     |
+`agent.enabled`     | Controls whether the ruleset is exposed as an MCP tool                   | `false`                                  |
+`agent.name`        | Customizes the name of the tool as exposed to AI assistants              | Name of the decision operation. Display Name in the Decision Server console. |
+`agent.description` | Overrides the default description of the ruleset when exposed as a tool  | Description of the decision operation     |
 
 #### Example
 
 ```
-tools.enabled=true
-tools.description=This tool calculates vacation days based on employee tenure and position
+agent.enabled=true
+agent.description=This tool calculates vacation days based on employee tenure and position
 ```
 
 **Note:** After updating ruleset properties, you need to redeploy the ruleset for changes to take effect.
@@ -443,7 +444,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Store and expose Decision Trace executions as MCP resources
 - [ ] Manage ODM certificate
 - [ ] Declare Structured Output
-- [ ] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
+- [x] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
 - [ ] Record demo video for Claude Desktop integration
