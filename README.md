@@ -336,15 +336,15 @@ You can add ruleset properties using any of these methods:
 #### MCP Configuration Properties
 Property | Description | Default |
 |-------------------|--------------------------------------------------------------------------|------------------------------------------|
-`tools.enabled`     | Controls whether the ruleset is exposed as an MCP tool                   | `false`                                  |
-`tools.name`        | Customizes the name of the tool as exposed to AI assistants              | Name of the decision operation. Display Name in the Decision Server console. |
-`tools.description` | Overrides the default description of the ruleset when exposed as a tool  | Description of the decision operation     |
+`agent.enabled`     | Controls whether the ruleset is exposed as an MCP tool                   | `false`                                  |
+`agent.name`        | Customizes the name of the tool as exposed to AI assistants              | Name of the decision operation. Display Name in the Decision Server console. |
+`agent.description` | Overrides the default description of the ruleset when exposed as a tool  | Description of the decision operation     |
 
 #### Example
 
 ```
-tools.enabled=true
-tools.description=This tool calculates vacation days based on employee tenure and position
+agent.enabled=true
+agent.description=This tool calculates vacation days based on employee tenure and position
 ```
 
 **Note:** After updating ruleset properties, you need to redeploy the ruleset for changes to take effect.
@@ -442,7 +442,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Store and expose Decision Trace executions as MCP resources
 - [ ] Manage ODM certificate
 - [ ] Declare Structured Output
-- [ ] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
+- [x] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
 - [ ] Record demo video for Claude Desktop integration
