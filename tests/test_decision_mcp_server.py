@@ -90,7 +90,8 @@ def test_create_credentials_basic_auth():
         zenapikey=None,
         client_id=None,
         client_secret=None,
-        verifyssl="True"
+        verifyssl="True",
+        ssl_cert_path=None
     )
     credentials = create_credentials(args)
     assert credentials.odm_url == "http://test:9060/res"
@@ -105,7 +106,8 @@ def test_create_credentials_zen_api():
         zenapikey="test-key",
         client_id=None,
         client_secret=None,
-        verifyssl="True"
+        verifyssl="True",
+        ssl_cert_path=None
     )
     credentials = create_credentials(args)
     assert credentials.zenapikey == "test-key"
@@ -121,7 +123,8 @@ def test_create_credentials_openid():
         client_secret="test-secret",
         token_url="http://op/token",
         scope="openid",
-        verifyssl="True"
+        verifyssl="True",
+        ssl_cert_path=None
     )
     credentials = create_credentials(args)
     assert credentials.client_id == "test-client"
@@ -159,7 +162,8 @@ def test_ssl_verification(verify_ssl, expected):
         zenapikey=None,        # Added missing required args
         client_id=None,        # Added missing required args
         client_secret=None,    # Added missing required args
-        verifyssl=verify_ssl
+        verifyssl=verify_ssl,
+        ssl_cert_path=None
     )
     credentials = create_credentials(args)
     assert credentials.verify_ssl == expected
@@ -180,7 +184,7 @@ def test_environment_variables():
         assert args.username == 'env_user'
         assert args.password == 'env_pass'
         assert args.traces_dir == '/env/traces/dir'
-        assert args.trace_enable == True  # Should be True because we set it explicitly
+        assert args.trace_enable is True  # Should be True because we set it explicitly
         assert args.trace_maxsize == 200
         assert args.log_level == 'DEBUG'
 
