@@ -154,8 +154,9 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 - The tools are exposed automatically by the MCP Server based on the ODM configuration.
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
 - Watch our demo video:
-<video src='docs/Claude.mp4' width=180/>
 
+  
+[<img width="400" height="300" alt="Screenshot 2025-08-14 at 15 33 26" src="https://github.com/user-attachments/assets/da6218eb-0fb0-4994-987f-d4a166633528" />](docs/Claude.mp4)
 
 ---
 ## Watson Orchestrate ADK Integration
