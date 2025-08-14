@@ -261,20 +261,6 @@ async def main():
     args = parse_arguments()
     
     # Configure logging with the specified level
-    logging_level = getattr(logging, args.log_level)
-    logging.basicConfig(
-        level=logging_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    try:
-        logging_level = getattr(logging, args.log_level)
-    except AttributeError:
-        logging.warning(f"Invalid log level '{args.log_level}' specified. Falling back to INFO.")
-        logging_level = logging.INFO
-    logging.basicConfig(
-        level=logging_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
     try:
         logging_level = getattr(logging, args.log_level)
     except AttributeError:
