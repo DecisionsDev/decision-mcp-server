@@ -126,17 +126,17 @@ The user responds with:
 
 Claude sends the input to the ODM decision service via the MCP Server. The service processes the request and returns a result, such as:
 
-> **ODM Response:** `{ "vacationDays": 25 }`
+> **ODM Response:** `{  "timeoffDays": "33 days per year" }`
 
 Claude interprets and presents the result:
 
-> **Claude:** "Based on your hiring date, you are entitled to 25 vacation days."
+> **Claude:** "Based on your hiring date, you are entitled to 33 time-off days."
 
 ##### 5. User Tries Another Input
 
 The user can experiment with different inputs:
 
-> **User:** "What if I was hired on 2022-01-01?"
+> **User:** "What if I was hired on 2000-01-01?"
 
 Claude reuses the tool, sends the new input, and returns the updated result.
 
@@ -146,7 +146,7 @@ The user can now try a different tool:
 
 > **User:** "Can I get some beauty advice?"
 
-Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., skin type, preferences) before invoking the ODM service and returning personalized recommendations.
+Claude activates the `beauty_advice` tool and may ask follow-up questions (e.g., skin type, preferences) before invoking the ODM service and returning personalized recommendations.
 
 #### Demo Notes
 
@@ -155,11 +155,9 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
 - Watch our demo video:
 
-[![](https://github.com/user-attachments/assets/3fce0475-e2a3-491f-9f88-9ae71f52d410")](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
+[![](https://github.com/user-attachments/assets/3fce0475-e2a3-491f-9f88-9ae71f52d410)](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
 
 
-
----
 ## Watson Orchestrate ADK Integration
 
 The Watson Orchestrate ADK integration allows you to connect the Decision MCP Server to Watson Orchestrate for dynamic decision-making workflows.
