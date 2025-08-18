@@ -155,7 +155,7 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
 - Watch our demo video:
 
-[![](https://github.com/user-attachments/assets/da6218eb-0fb0-4994-987f-d4a166633528)](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
+[![](https://github.com/user-attachments/assets/3fce0475-e2a3-491f-9f88-9ae71f52d410")](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
 
 
 
