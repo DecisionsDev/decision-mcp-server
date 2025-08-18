@@ -155,8 +155,9 @@ Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., 
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
 - Watch our demo video:
 
-  
-[<img width="400" height="300" alt="Screenshot 2025-08-14 at 15 33 26" src="https://github.com/user-attachments/assets/da6218eb-0fb0-4994-987f-d4a166633528" />](docs/Claude.mp4)
+[![](https://github.com/user-attachments/assets/da6218eb-0fb0-4994-987f-d4a166633528)](https://github.com/DecisionsDev/decision-mcp-server/blob/feature/rename_dc_project/docs/Claude.mp4)
+
+
 
 ---
 ## Watson Orchestrate ADK Integration
@@ -312,6 +313,15 @@ or
 
 ---
 
+**Tips:**
+- Use CLI arguments for quick overrides or non-sensitive parameters.
+- Use environment variables for secrets.
+- You can mix both methods if needed. CLI arguments override environment variables.
+
+> **Recommended:** For local development and testing, use the Basic Auth example above. For production or Cloud Pak deployments, use the Zen API Key or OpenID Connect options as appropriate for your environment.
+
+---
+
 ### Ruleset Properties for MCP Configuration
 
 You can configure how your Decision Server rulesets are exposed as MCP tools by setting specific ruleset properties in IBM ODM. These properties control whether a ruleset is available as a tool and how it's presented to AI assistants.
@@ -354,15 +364,6 @@ agent.description=This tool calculates vacation days based on employee tenure an
 ```
 
 **Note:** After updating ruleset properties, you need to redeploy the ruleset for changes to take effect.
-
----
-
-**Tips:**
-- Use CLI arguments for quick overrides or non-sensitive parameters.
-- Use environment variables for secrets or when integrating with secret managers.
-- You can mix both methods if needed. CLI arguments override environment variables.
-
-> **Recommended:** For local development and testing, use the Basic Auth example above. For production or Cloud Pak deployments, use the Zen API Key or OpenID Connect options as appropriate for your environment.
 
 ---
 
