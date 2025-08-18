@@ -99,7 +99,7 @@ This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Devel
 Once Claude Desktop is configured with the MCP Server, it automatically connects to the ODM Developer Edition. The MCP Server retrieves and exposes the available decision services as Claude tools.
 
 ✅ You should see both tools listed in Claude's interface:
-- `compute_vcation`
+- `compute_vacation`
 - `beauty_advice`
 
 ![Screenshot showing Claude tools](docs/claude-mcp-tools.png)
