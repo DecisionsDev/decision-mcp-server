@@ -99,8 +99,8 @@ This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Devel
 Once Claude Desktop is configured with the MCP Server, it automatically connects to the ODM Developer Edition. The MCP Server retrieves and exposes the available decision services as Claude tools.
 
 ✅ You should see both tools listed in Claude's interface:
-- `computeVacation`
-- `beautyAdvice`
+- `compute_vacation`
+- `beauty_advice`
 
 ![Screenshot showing Claude tools](docs/claude-mcp-tools.png)
 
@@ -126,17 +126,17 @@ The user responds with:
 
 Claude sends the input to the ODM decision service via the MCP Server. The service processes the request and returns a result, such as:
 
-> **ODM Response:** `{ "vacationDays": 25 }`
+> **ODM Response:** `{  "timeoffDays": "33 days per year" }`
 
 Claude interprets and presents the result:
 
-> **Claude:** "Based on your hiring date, you are entitled to 25 vacation days."
+> **Claude:** "Based on your hiring date, you are entitled to 33 time-off days."
 
 ##### 5. User Tries Another Input
 
 The user can experiment with different inputs:
 
-> **User:** "What if I was hired on 2022-01-01?"
+> **User:** "What if I was hired on 2000-01-01?"
 
 Claude reuses the tool, sends the new input, and returns the updated result.
 
@@ -146,15 +146,18 @@ The user can now try a different tool:
 
 > **User:** "Can I get some beauty advice?"
 
-Claude activates the `beautyAdvice` tool and may ask follow-up questions (e.g., skin type, preferences) before invoking the ODM service and returning personalized recommendations.
+Claude activates the `beauty_advice` tool and may ask follow-up questions (e.g., skin type, preferences) before invoking the ODM service and returning personalized recommendations.
 
 #### Demo Notes
 
 - This scenario demonstrates how Claude can dynamically interact with multiple decision services.
 - The tools are exposed automatically by the MCP Server based on the ODM configuration.
 - You can extend this setup with additional decision services or integrate it into broader workflows using Watson Orchestrate.
+- Watch our demo video:
 
----
+[![](https://github.com/user-attachments/assets/3fce0475-e2a3-491f-9f88-9ae71f52d410)](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
+
+
 ## Watson Orchestrate ADK Integration
 
 The Watson Orchestrate ADK integration allows you to connect the Decision MCP Server to Watson Orchestrate for dynamic decision-making workflows.
@@ -308,6 +311,15 @@ or
 
 ---
 
+**Tips:**
+- Use CLI arguments for quick overrides or non-sensitive parameters.
+- Use environment variables for secrets.
+- You can mix both methods if needed. CLI arguments override environment variables.
+
+> **Recommended:** For local development and testing, use the Basic Auth example above. For production or Cloud Pak deployments, use the Zen API Key or OpenID Connect options as appropriate for your environment.
+
+---
+
 ### Ruleset Properties for MCP Configuration
 
 You can configure how your Decision Server rulesets are exposed as MCP tools by setting specific ruleset properties in IBM ODM. These properties control whether a ruleset is available as a tool and how it's presented to AI assistants.
@@ -350,15 +362,6 @@ agent.description=This tool calculates vacation days based on employee tenure an
 ```
 
 **Note:** After updating ruleset properties, you need to redeploy the ruleset for changes to take effect.
-
----
-
-**Tips:**
-- Use CLI arguments for quick overrides or non-sensitive parameters.
-- Use environment variables for secrets or when integrating with secret managers.
-- You can mix both methods if needed. CLI arguments override environment variables.
-
-> **Recommended:** For local development and testing, use the Basic Auth example above. For production or Cloud Pak deployments, use the Zen API Key or OpenID Connect options as appropriate for your environment.
 
 ---
 
@@ -447,7 +450,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication
 - [ ] Expose a tool to explain decisions
-- [ ] Record demo video for Claude Desktop integration
+- [x] Record demo video for Claude Desktop integration
 - [x] Add a docker-compose to inject to deploy the ruleapps.
 - [x] Support configuration via CLI and environment variables
 - [x] Verify Zen authentication support
