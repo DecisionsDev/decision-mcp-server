@@ -98,9 +98,9 @@ class DecisionMCPServer:
             if result.get("__DecisionID__") is not None:
                 decision_id = result["__DecisionID__"]
                 del result["__DecisionID__"]
-            if result.get("__DecisionTrace__") is not None:
+            if result.get("__decisionTrace__") is not None:
                 # Ensure decision_trace is a dictionary
-                trace_value = result["__DecisionTrace__"]
+                trace_value = result["__decisionTrace__"]
                 if isinstance(trace_value, dict):
                     decision_trace = trace_value
                 elif isinstance(trace_value, str):
@@ -114,7 +114,7 @@ class DecisionMCPServer:
                     # For any other type, convert to a dictionary
                     decision_trace = {"value": str(trace_value)}
                 
-                del result["__DecisionTrace__"]
+                del result["__decisionTrace__"]
                 
             response_text = json.dumps(result, indent=2, ensure_ascii=False)
         else:
