@@ -44,19 +44,24 @@ uv python list
 
 #### Step 2: Run ODM Locally (Optional)
 
-If you want to use a local ODM instance for development or testing, you can start it using Docker Compose:
+If you want to use a local ODM instance for development or testing, 
 
-```bash
-docker-compose up
-...
-upload_materials  | ✅ ODM Ready for MCP Server
-upload_materials exited with code 0
-```
+- clone this repository,
+- and run:
 
-Once the containers are running, access the ODM web console at [http://localhost:9060](http://localhost:9060) using the default credentials:
+    ```bash
+    docker-compose up
+    ```
+  If the command is successful, you should see:
+    ```
+    upload_materials  | ✅ ODM Ready for MCP Server
+    upload_materials exited with code 0
+    ```
 
-- **Username:** `odmAdmin`
-- **Password:** `odmAdmin`
+- Once the containers are running, the ODM web consoles are available at [http://localhost:9060](http://localhost:9060) using the default credentials:
+
+  - **Username:** `odmAdmin`
+  - **Password:** `odmAdmin`
 
 This ODM instance will be available for the MCP Server, pre-populated with sample data for testing and development purposes.
 
