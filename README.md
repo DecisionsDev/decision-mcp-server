@@ -28,8 +28,12 @@ It enables you to:
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+  - on macOS: `brew install uv`
+  - on Windows: see link above
+- Git
+  > Note: on Windows, install Git in a path without space character.
 - Claude Desktop ([Download](https://claude.ai/download))
-- Docker (optional, for local ODM deployment)
+- Docker and Docker Compose (optional, for Step 2: local ODM deployment)
 
 #### Step 1: Install `uv` and Python
 
@@ -40,19 +44,24 @@ uv python list
 
 #### Step 2: Run ODM Locally (Optional)
 
-If you want to use a local ODM instance for development or testing, you can start it using Docker Compose:
+If you want to use a local ODM instance for development or testing, 
 
-```bash
-docker-compose up
-...
-upload_materials  | ✅ ODM Ready for MCP Server
-upload_materials exited with code 0
-```
+- clone this repository,
+- and run:
 
-Once the containers are running, access the ODM web console at [http://localhost:9060](http://localhost:9060) using the default credentials:
+    ```bash
+    docker-compose up
+    ```
+  If the command is successful, you should see:
+    ```
+    upload_materials  | ✅ ODM Ready for MCP Server
+    upload_materials exited with code 0
+    ```
 
-- **Username:** `odmAdmin`
-- **Password:** `odmAdmin`
+- Once the containers are running, the ODM web consoles are available at [http://localhost:9060](http://localhost:9060) using the default credentials:
+
+  - **Username:** `odmAdmin`
+  - **Password:** `odmAdmin`
 
 This ODM instance will be available for the MCP Server, pre-populated with sample data for testing and development purposes.
 
@@ -81,7 +90,11 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
    }
    ```
 
-4. Restart Claude Desktop.
+4. Restart Claude Desktop:
+
+    Simply closing the window is not enough, Claude Desktop must be stopped and restarted:
+    - on macOS: Claude > Quit
+    - on Windows: File > Exit
 
 Refer to the [Parameters Table](#parameters-table) for a list of supported environment variables and CLI arguments.
 
