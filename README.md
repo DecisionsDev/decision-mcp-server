@@ -28,8 +28,12 @@ It enables you to:
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+  - on macOS: `brew install uv`
+  - on Windows: see link above
+- Git
+  > Note: on Windows, install Git in a path without space character.
 - Claude Desktop ([Download](https://claude.ai/download))
-- Docker (optional, for local ODM deployment)
+- Docker and Docker Compose (optional, for Step 2: local ODM deployment)
 
 #### Step 1: Install `uv` and Python
 
@@ -81,7 +85,11 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
    }
    ```
 
-4. Restart Claude Desktop.
+4. Restart Claude Desktop:
+
+    Simply closing the window is not enough, Claude Desktop must be stopped and restarted:
+    - on macOS: Claude > Quit
+    - on Windows: File > Exit
 
 Refer to the [Parameters Table](#parameters-table) for a list of supported environment variables and CLI arguments.
 
