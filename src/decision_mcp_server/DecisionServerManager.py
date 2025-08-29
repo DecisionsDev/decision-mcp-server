@@ -123,23 +123,28 @@ class DecisionServerManager:
         Recursively convert a jsonref.JsonRef structure to a plain JSON-serializable dict, dealing with circular references
         """
 
-        def is_object(obj):
-            return isinstance(obj, dict) and obj.get("type", "") == "object" and "properties" in obj
+        def circular_reference(v,seen_ids):
+            if isinstance(v, dict) and v.get("type", "") == "object" and "properties" in v:
+                v_id = id(v)
+                if v_id in seen_ids:
+                    return True # this is a circular reference
+                seen_ids.append(v_id)
+            return False
 
-        def serialize(obj,seen_ids):
+        def to_plain_dict(obj,seen_ids):
             if isinstance(obj, dict):
-                if is_object(obj):
-                    obj_id = id(obj)
-                    if obj_id in seen_ids:
-                        return # this is a circular reference, ignore it
-                    seen_ids.append(obj_id)
-                return {k: serialize(v,seen_ids.copy()) for k, v in obj.items()}
+                x = {}
+                for k, v in obj.items():
+                    seen_ids_copy = seen_ids.copy()
+                    if not circular_reference(v,seen_ids_copy):
+                        x[k] = to_plain_dict(v,seen_ids_copy)
+                return x
             elif isinstance(obj, list):
-                return [serialize(i,seen_ids) for i in obj]
+                return [to_plain_dict(i,seen_ids) for i in obj]
             else:
                 return obj
 
-        return serialize(obj,[])
+        return to_plain_dict(obj,[])
 
     def get_ruleset_openapi(self, ruleset):
         """
