@@ -1,0 +1,14 @@
+files:
+  - README.md
+dirs:
+  - ./
+ignorePatterns:
+  - pattern: '^https://localhost*$'
+replacementPatterns:
+  - pattern: "https://www.ibm.com/docs"
+    replacement: 'https://ibmdocs-test.dcs.ibm.com/docs'
+aliveStatusCodes:
+  - 200
+  - 206
+  - 429
+useGitIgnore: true
