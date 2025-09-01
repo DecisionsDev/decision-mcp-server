@@ -1,0 +1,16 @@
+
+name: 'Check Markdown Links with linkspector'
+on: push
+jobs:
+  check-links:
+    name: runner / linkspector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linkspector
+        uses: umbrelladocs/action-linkspector@v1
+        with:
+          fail_on_error: true
+          filter_mode: nofilter
+          show_stats: true
+
