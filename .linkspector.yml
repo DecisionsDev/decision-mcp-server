@@ -3,7 +3,7 @@ files:
 dirs:
   - ./
 ignorePatterns:
-  - pattern: '^https://localhost*$'
+  - pattern: '^http://localhost*$'
 replacementPatterns:
   - pattern: "https://www.ibm.com/docs"
     replacement: 'https://ibmdocs-test.dcs.ibm.com/docs'
