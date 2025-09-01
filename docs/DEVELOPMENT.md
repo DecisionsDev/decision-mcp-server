@@ -19,7 +19,7 @@ This allow you to test the connection between the MCP Server and ODM localy.
 ```bash
 docker run -d -p 9060:9060 -e SAMPLE=true -e LICENSE=accept --name odm docker.io/ibmcom/odm:9.5.0.0_25.0.0
 ```
-You can find a ruleapp in the directory  [samples/samples-ruleapp.jar](samples/samples-ruleapp.jar) that you can use for the test.
+You can find a ruleapp in the directory  [samples/samples-ruleapp.jar](/samples/samples-ruleapp.jar) that you can use for the test.
 
 
 

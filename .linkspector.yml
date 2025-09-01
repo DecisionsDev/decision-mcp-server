@@ -1,9 +1,7 @@
-files:
-  - README.md
 dirs:
   - ./
 ignorePatterns:
-  - pattern: '^http://localhost*$'
+  - pattern: '^http://localhost*'
 replacementPatterns:
   - pattern: "https://www.ibm.com/docs"
     replacement: 'https://ibmdocs-test.dcs.ibm.com/docs'
