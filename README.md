@@ -100,10 +100,11 @@ Refer to the [Parameters Table](#parameters-table) for a list of supported envir
 
 ### Part 2: Demo Walkthrough
 
-This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Developer Edition through the Decision MCP Server. The scenario showcases two decision services:
+This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Developer Edition through the Decision MCP Server. The scenario showcases three decision services:
 
 1. **Vacation Policy Decision Service** – Computes vacation days based on company policy.
 2. **Beauty Advice Decision Service** – Provides personalized beauty recommendations.
+3. **Agent Miniloan Service** – Assess loan requests.
 
 #### Step-by-Step Scenario
 
@@ -111,11 +112,12 @@ This walkthrough demonstrates how Claude Desktop can interact with IBM ODM Devel
 
 Once Claude Desktop is configured with the MCP Server, it automatically connects to the ODM Developer Edition. The MCP Server retrieves and exposes the available decision services as Claude tools.
 
-✅ You should see both tools listed in Claude's interface:
-- `compute_vacation`
-- `beauty_advice`
-
+✅ To see all the tools listed in Claude Desktop, proceed as follows:
+- first click the settings icon, and you should see:
 ![Screenshot showing Claude tools](docs/claude-mcp-tools.png)
+
+- then click `decision-mcp-server`, and you should see:
+![Screenshot showing Claude tools](docs/claude-mcp-tools-details.png)
 
 ##### 2. User Starts a Conversation
 
