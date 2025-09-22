@@ -288,7 +288,6 @@ class DecisionServerManager:
             if response.status_code == 200:
                 return response.json()
             else:
-                logging.error(f"Request error, status: {response.status_code}")
-        except requests.exceptions.RequestException as e:  
-            return {"error": f"An error occurred when invoking the Decision Service: {e}"}
-    
+                err = response.content.decode('utf-8')
+                logging.error(f"Request error, status: {response.status_code}, error: {err}")
+                raise Exception(err)

@@ -83,7 +83,8 @@ class DecisionMCPServer:
         # Ensure manager is initialized before using it
         if self.manager is None:
             self.manager = DecisionServerManager(credentials=self.credentials)
-            
+
+        # this call may throw an exception, handled by Server.call_tool.handler
         result = self.manager.invokeDecisionService(
             rulesetPath=self.repository[name].rulesetPath,
             decisionInputs=arguments
