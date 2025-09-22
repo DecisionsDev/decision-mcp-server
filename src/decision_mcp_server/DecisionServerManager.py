@@ -279,15 +279,15 @@ class DecisionServerManager:
         params = {**decisionInputs}
         if trace:
             params.update(self.trace)  # Add trace information to params
-        try:
-            session = self.credentials.get_session()
-            response = session.post(self.credentials.odm_url_runtime+'/rest'+rulesetPath, headers=headers,
-                                    json=params)
 
-            # check response
-            if response.status_code == 200:
-                return response.json()
-            else:
-                err = response.content.decode('utf-8')
-                logging.error(f"Request error, status: {response.status_code}, error: {err}")
-                raise Exception(err)
+        session = self.credentials.get_session()
+        response = session.post(self.credentials.odm_url_runtime+'/rest'+rulesetPath, headers=headers,
+                                json=params)
+
+        # check response
+        if response.status_code == 200:
+            return response.json()
+        else:
+            err = response.content.decode('utf-8')
+            logging.error(f"Request error, status: {response.status_code}, error: {err}")
+            raise Exception(err)
