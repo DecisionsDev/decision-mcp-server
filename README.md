@@ -447,14 +447,14 @@ These annotations provide:
 - Format specifications
 - Additional metadata that can be included in the generated OpenAPI specification
 
-> **Note:** It's not necessary to package the Swagger JAR file in the XOM (Execution Object Model) as it's already part of the IBM ODM product. You can use the annotations directly without adding additional dependencies to your project.
+> **Note:** It is not necessary to package the Swagger JAR file in the XOM (Execution Object Model) as it's already part of the IBM ODM product. You can use the annotations directly without adding additional dependencies to your project.
 
 By combining rich service descriptions with properly annotated model classes, you can create tool definitions that LLMs can understand and use with high precision, reducing errors and improving the quality of interactions.
 
 ## More informations
 
-- For IBM ODM, see [IBM Documentation](https://www.ibm.com/docs/en/odm).
-- For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orchestrate.ibm.com/getting_started/installing).
+- For IBM Operational Decision Manager (ODM), see [IBM Documentation](https://www.ibm.com/docs/en/odm).
+- For IBM Watsonx Orchestrate, see [Getting Started](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=getting-started-watsonx-orchestrate).
 - For Claude Desktop, see [Claude Documentation](https://claude.ai/docs).
 
 ---
