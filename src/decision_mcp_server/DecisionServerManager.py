@@ -181,11 +181,14 @@ class DecisionServerManager:
                 else:
                     self.logger.error("Request failed with status code: %s", response.status_code)
                     self.logger.error("Response: %s", response.text)
+                    raise Exception(response.text)
 
         except requests.exceptions.RequestException as e:
                 self.logger.error("An error occurred: %s", e)
-        except json.JSONDecodeError:
+                raise e
+        except json.JSONDecodeError as e:
                 self.logger.error("Failed to decode JSON response.")
+                raise e
         
 
     def get_input_schema(self, ruleset):
@@ -220,7 +223,10 @@ class DecisionServerManager:
 
         for ruleset in filtered_rulesets.values():
 
-            input_schema = self.get_input_schema(ruleset)
+            try:
+                input_schema = self.get_input_schema(ruleset)
+            except Exception:
+                continue # ignore this ruleset
             toolName = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.name"), ruleset["displayName"]).replace(" ", "_").lower()
             toolDescription = next((prop["value"] for prop in ruleset["properties"] if prop["id"] == "agent.description"), ruleset["description"])
              # Define a class to hold the formatted ruleset data
