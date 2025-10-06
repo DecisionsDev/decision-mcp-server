@@ -179,11 +179,11 @@ Claude activates the `beauty_advice` tool and may ask follow-up questions (e.g.,
 [![](https://github.com/user-attachments/assets/3fce0475-e2a3-491f-9f88-9ae71f52d410)](https://raw.githubusercontent.com/DecisionsDev/decision-mcp-server/refs/heads/feature/rename_dc_project/docs/Claude.mp4)
 
 
-## Watson Orchestrate ADK Integration
+## IBM Watsonx Orchestrate Integration
 
-The Watson Orchestrate ADK integration allows you to connect the Decision MCP Server to Watson Orchestrate for dynamic decision-making workflows.
+IBM watsonx Orchestrate can be augmented with decisions implemented in IBM Operational Decision Manager (ODM) thanks to the Decision MCP Server.
 
-For detailed instructions, see the [Watson Orchestrate ADK Integration Guide](docs/watson-orchestrate-adk-guide.md).
+For detailed instructions, see the [IBM watsonx Orchestrate Integration Guide](/docs/IBM-watsonx-orchestrate-guide.md).
 
 ---
 
@@ -447,14 +447,14 @@ These annotations provide:
 - Format specifications
 - Additional metadata that can be included in the generated OpenAPI specification
 
-> **Note:** It's not necessary to package the Swagger JAR file in the XOM (Execution Object Model) as it's already part of the IBM ODM product. You can use the annotations directly without adding additional dependencies to your project.
+> **Note:** It is not necessary to package the Swagger JAR file in the XOM (Execution Object Model) as it is already part of the IBM ODM product. You can use the annotations directly without adding additional dependencies to your project.
 
 By combining rich service descriptions with properly annotated model classes, you can create tool definitions that LLMs can understand and use with high precision, reducing errors and improving the quality of interactions.
 
 ## More informations
 
-- For IBM ODM, see [IBM Documentation](https://www.ibm.com/docs/en/odm).
-- For Watson Orchestrate ADK, see [Getting Started](https://developer.watson-orchestrate.ibm.com/getting_started/installing).
+- For IBM Operational Decision Manager (ODM), see [IBM Documentation](https://www.ibm.com/docs/en/odm).
+- For IBM Watsonx Orchestrate, see [Getting Started](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=getting-started-watsonx-orchestrate).
 - For Claude Desktop, see [Claude Documentation](https://claude.ai/docs).
 
 ---
