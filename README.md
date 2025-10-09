@@ -85,7 +85,7 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
            "git+https://github.com/DecisionsDev/decision-mcp-server",
            "decision-mcp-server",
            "--url",
-           "https://localhost:9060/res",
+           "http://localhost:9060/res",
            "--username",
            "odmAdmin",
            "--password",
