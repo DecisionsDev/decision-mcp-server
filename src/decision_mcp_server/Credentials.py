@@ -1,18 +1,10 @@
 import requests
 from requests.adapters import HTTPAdapter
-import requests.auth
 import ssl
 from validator_collection import  checkers
+import base64
 import logging
 import json
-import time
-import uuid
-import hashlib
-import base64
-from datetime import datetime, timedelta
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 
 class CustomHTTPAdapter(HTTPAdapter):
     """
@@ -70,9 +62,9 @@ class Credentials:
     get_session():
         Creates and returns a requests Session object configured with SSL settings.
     """
-    def __init__(self, odm_url, odm_url_runtime=None, token_url=None, scope='openid', client_id=None, client_secret=None, jwt_cert_path=None, jwt_public_cert_path=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
+    def __init__(self, odm_url, odm_url_runtime=None, token_url=None, scope='openid', client_id=None, client_secret=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
 
-        self.odm_url=odm_url.rstrip('/')
+        self.odm_url=odm_url.rstrip('/') 
         if odm_url_runtime is not None:
            logging.info("Using provided runtime URL: " + odm_url_runtime)
            self.odm_url_runtime=odm_url_runtime.rstrip('/')  
@@ -97,8 +89,6 @@ class Credentials:
         self.scope = scope
         self.client_id = client_id
         self.client_secret = client_secret
-        self.jwt_cert_path = jwt_cert_path
-        self.jwt_public_cert_path = jwt_public_cert_path
         self.zenapikey = zenapikey
         self.verify_ssl = verify_ssl
         self.ssl_cert_path = ssl_cert_path
@@ -118,113 +108,17 @@ class Credentials:
                 'accept': 'application/json; charset=UTF-8'
             }
         elif self.client_id:
-            if not self.client_id or not self.token_url:
-                raise ValueError("Both 'client_id' and 'token_url' are required for OpenId authentication.")
-            
-            # Check if we're using PWJWT (certificate-based) or client_secret
-            if self.jwt_cert_path:
-                # Ensure both private and public certificates are provided
-                if not self.jwt_public_cert_path:
-                    raise ValueError("Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication.")
-                
-                # PWJWT authentication using certificate
-                # Note: PyJWT package is required for PWJWT authentication
-                # If you get an error, install it with: pip install PyJWT
-                try:
-                    # Try to import PyJWT dynamically
-                    # pylint: disable=import-outside-toplevel
-                    # type: ignore
-                    import jwt  # type: ignore # noqa
-                except ImportError:
-                    raise ImportError("PyJWT package is required for PWJWT authentication. Install with 'pip install PyJWT'.")
-                
-                # Read the private key from the certificate file
-                try:
-                    with open(self.jwt_cert_path, 'r') as cert_file:
-                        private_key = cert_file.read()
-                except FileNotFoundError:
-                    raise ValueError(f"Certificate file not found at path: {self.jwt_cert_path}")
-                except IOError as e:
-                    raise ValueError(f"Error reading certificate file: {str(e)}")
-                
-                # Create JWT token with required claims
-                now = int(time.time())
-                exp_time = now + 3600  # Token valid for 1 hour
-                
-                payload = {
-                    'iss': self.client_id,  # Issuer is the client_id
-                    'sub': self.client_id,  # Subject is also the client_id for client credentials
-                    'aud': self.token_url,  # Audience is the token endpoint
-                    'exp': exp_time,        # Expiration time
-                    'iat': now,             # Issued at time
-                    'jti': str(uuid.uuid4()) # Unique identifier for the JWT
-                }
-                
-                try:
-                    # Calculate the certificate thumbprint from the public certificate
-                    try:
-                        with open(self.jwt_public_cert_path, 'rb') as cert_file:
-                            cert_data = cert_file.read()
-                        
-                        # Load the certificate
-                        if b"BEGIN CERTIFICATE" in cert_data:
-                            cert = x509.load_pem_x509_certificate(cert_data, default_backend())
-                        else:
-                            cert = x509.load_der_x509_certificate(cert_data, default_backend())
-                        
-                        # Calculate SHA-1 thumbprint (x5t)
-                        sha1_hash = hashlib.sha1(cert.public_bytes(encoding=serialization.Encoding.DER)).digest()
-                        sha1_b64 = base64.urlsafe_b64encode(sha1_hash).decode('utf-8').rstrip('=')
-                        
-
-                        # Calculate SHA-256 thumbprint
-                        sha256_hash = hashlib.sha256(cert_data).digest()
-                        sha256_b64 = base64.urlsafe_b64encode(sha256_hash).rstrip(b'=').decode('utf-8')
-                        
-                        # Add thumbprints to JWT header
-                        headers = {
-                            'x5t': sha1_b64     # Use the calculated SHA-1 thumbprint
-                        }
-                        logging.debug(f"Using calculated x5t from public certificate: {sha1_b64}")
-                    except Exception as e:
-                        # Don't fallback to hardcoded value, raise an error instead
-                        raise ValueError(f"Error calculating certificate thumbprint from public certificate: {str(e)}")
-                    
-                    # Sign the JWT with the private key and include headers
-                    encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256', headers=headers)
-                    logging.info("JWT token created successfully.");   
-                    logging.debug("msg encoded JWT "+encoded_jwt)                # Prepare the token request with the JWT assertion
-                    data = {
-                        'grant_type': 'client_credentials',
-                        'scope': self.scope,
-                        'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-                        'client_assertion': encoded_jwt
-                    }
-                    
-                    # Make the token request without auth header (the JWT is the auth)
-                    if self.verify_ssl:
-                        response = requests.post(self.token_url, data=data, verify=self.cacert)
-                    else:
-                        response = requests.post(self.token_url, data=data, verify=False)
-                except Exception as e:
-                    raise ValueError(f"Error creating or sending JWT token: {str(e)}")
+            if not self.client_id or not self.client_secret or not self.token_url:
+                raise ValueError("All three parameters are required for OpenId authentication: 'client_id', 'client_secret' and 'token_url'.")
+            data = {
+                'grant_type': 'client_credentials',
+                'scope':       self.scope,
+            }
+            auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
+            if self.verify_ssl:
+                response = requests.post(self.token_url, data=data, auth=auth, verify=self.cacert)
             else:
-                # Standard OpenID client_secret authentication
-                if not self.client_secret:
-                    if self.jwt_public_cert_path:
-                        raise ValueError("Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication.")
-                    else:
-                        raise ValueError("Either 'client_secret' or 'jwt_cert_path' is required for OpenId authentication.")
-                
-                data = {
-                    'grant_type': 'client_credentials',
-                    'scope': self.scope,
-                }
-                auth = requests.auth.HTTPBasicAuth(self.client_id, self.client_secret)
-                if self.verify_ssl:
-                    response = requests.post(self.token_url, data=data, auth=auth, verify=self.cacert)
-                else:
-                    response = requests.post(self.token_url, data=data, auth=auth, verify=False)
+                response = requests.post(self.token_url, data=data, auth=auth, verify=False)
             response.raise_for_status() # raise an HTTPError if the request failed
             token_data = response.json()
             access_token = token_data['access_token']
