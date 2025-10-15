@@ -198,6 +198,264 @@ def test_get_auth_openid_malformed_response():
     assert len(responses.calls) == 1
 
 @responses.activate
+def test_get_auth_pwjwt_with_public_cert():
+    """Test PWJWT authentication with a public certificate for x5t computation."""
+    import tempfile
+    import os
+    import base64
+    import hashlib
+    import jwt  # Make sure PyJWT is installed
+    from unittest.mock import patch, MagicMock
+    
+    # Create temporary certificate files for testing
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as private_key_file:
+        # This is a test private key (not secure, just for testing)
+        private_key = """-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAu1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gun
+VTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u+qKhbwKfBstIs+bMY2Zkp18gnTxK
+LxoS2tFczGkPLPgizskuemMghRniWWoLnB0/QILJvmjVWSv9ddnx6mT2J5Cv5KMD
+Hq7Vdi3PzwJC2/Lw9VW1VVBswxWxIexPAlKe8LFzgawqiGWEUGXAGFy+I0IH8oes
+C3T+fCmpgsTWMjCfBpvEIRaqFLy0EzDcg8FsThmZRY15RJJg+cAiAPgvEEB44zaJ
+w+SkayLjej4qPfD2cQIDAQABAoIBAQDlJ+ScFfDgfDAbvYwFPGBGEYUYAGHb4bGd
+EJXMiRawFRqTb1l5jCRjgEDVG3caeRlW/S7mE0IgkDWUwUCSjvwGXxrOzXCswA73
+/HEu6Br9aWKGJu8EFP4QhSVYVZRIPocWSO5lbL8QlFUgEMTi5Srzu2WWQnRlSIFi
+KxvSfs/EtQIBAQDRcQdz+1sT5g7iulAxqmz/OS7Qb0GTd0UE2xrV56cT+IlXAF3h
+M+/VDzKk3DyDAAdlkXWtInOx1TetF2qpdb+zY8GRS8FkCKScc7gVP9z66cFlU82a
+KvAybcWww2BWXL+al8VM/sE+W9JIdkrBuyVfMRfTU1s1OaBszKv+71EDdwIBAQBl
+JDyr8WZCEfFmeadrh7t2kEjMzE/fjy3lF8oMrl9XrT+rxDGBnuSUx8BCJRcZUXLr
+10RMtBWQo3G+zsB/D8mXw9m1Cv93G2P+ZFlpY9fQoIlxjsGtDCosSTm8VKNG8/V0
+aXuIr8PYf6HgnH+DjMpHXEKLWdeqsRuKoYo3ZbEyFQIBAQDGAlR8ndMpcUcUEMSz
+udr0mTsv50daJRri54jesvbDO6caLcLWIT1Tmy1FRRQvywdjeUPE0VdO4Ym1bGZM
+aBhUsErwlm7QwkUHBW0xBOcbwVrj5qo0N1DTXYKxhBx/VGfmznBGb71FBTRX0czZ
+gUcH45OnFljBB8PtQ+T/RZenIwIBAQCgwC/KJbEPKyDxV8GWcX7zOi+W5q9qXMJm
+Y0mNaZHuYNJOdOKW9hCmUQY/BXBdd2KYkpRD0SnGfF/VQrZRfcXmLCExNYpMRTDN
+2wZX7sXNh6AYwFdJKW8yP9FxoLUbNDmmYyPlqIiAcBKJvvwndZczROLmwLFgYUzw
+qYQV1B0ATz0Yd6X+RGQhD6kocCRXJFmHhYjMdLINd+KKjOxSG0j3OKjzHEPLMpbp
+QCQJVp0YqLKYXUYAA4VZi+MBpZA5KgZVIFQLm5IzQvuGqEQOMmCQC+Z2TPt8VQQN
+t+Z1H5t2K+MG8ky6bo3QaSNBXOPHVnK/TQ0S171JfQDmzXJSPVEr
+-----END RSA PRIVATE KEY-----"""
+        private_key_file.write(private_key.encode())
+        private_key_path = private_key_file.name
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.crt') as public_cert_file:
+        # This is a test public certificate (not secure, just for testing)
+        public_cert = """-----BEGIN CERTIFICATE-----
+MIIDazCCAlOgAwIBAgIUOd70QQlNOIUgFoNNa7QzbdtKWucwDQYJKoZIhvcNAQEL
+BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMzA0MTIxNDQ2NDNaFw0yNDA0
+MTExNDQ2NDNaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQC7VJTUt9Us8cKjMzEfYyjiWA4R4/M2bS1GB4t7NXp9
+8C3SC6dVMvDuictGeurT8jNbvJZHtCSuYEvuNMoSfm76oqFvAp8Gy0iz5sxjZmSn
+XyCdPEovGhLa0VzMaQ8s+CLOyS56YyCFGeJZagucHT9Agsm+aNVZK/112fHqZPYn
+kK/kowMertV2Lc/PAkLb8vD1VbVVUGzDFbEh7E8CUp7wsXOBrCqIZYRQZcAYXL4j
+Qgfyh6wLdP58KamCxNYyMJ8Gm8QhFqoUvLQTMNyDwWxOGZlFjXlEkmD5wCIA+C8Q
+QHjjNonD5KRrIuN6Pio98PZxAgMBAAGjUzBRMB0GA1UdDgQWBBQNRxQMcVIlWiL7
+RjXiqqFKmNKBQDAfBgNVHSMEGDAWgBQNRxQMcVIlWiL7RjXiqqFKmNKBQDAPBgNV
+HRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCgwC/KJbEPKyDxV8GWcX7z
+Oi+W5q9qXMJmY0mNaZHuYNJOdOKW9hCmUQY/BXBdd2KYkpRD0SnGfF/VQrZRfcXm
+LCExNYpMRTDN2wZX7sXNh6AYwFdJKW8yP9FxoLUbNDmmYyPlqIiAcBKJvvwndZcz
+ROLmwLFgYUzwqYQV1B0ATz0Yd6X+RGQhD6kocCRXJFmHhYjMdLINd+KKjOxSG0j3
+OKjzHEPLMpbpQCQJVp0YqLKYXUYAA4VZi+MBpZA5KgZVIFQLm5IzQvuGqEQOMmCQ
+C+Z2TPt8VQQNt+Z1H5t2K+MG8ky6bo3QaSNBXOPHVnK/TQ0S171JfQDmzXJSPVEr
+-----END CERTIFICATE-----"""
+        public_cert_file.write(public_cert.encode())
+        public_cert_path = public_cert_file.name
+    
+    try:
+        # Mock the certificate loading and thumbprint calculation
+        with patch('cryptography.x509.load_pem_x509_certificate') as mock_load_cert, \
+             patch('cryptography.x509.load_der_x509_certificate') as mock_load_der_cert, \
+             patch('jwt.encode') as mock_encode:
+            
+            # Create a mock certificate
+            mock_cert = MagicMock()
+            mock_cert.public_bytes.return_value = b"mocked_cert_bytes"
+            mock_load_cert.return_value = mock_cert
+            mock_load_der_cert.return_value = mock_cert
+            
+            # Expected x5t value (doesn't matter what it is for the test)
+            expected_x5t = "mocked_x5t_value"
+            
+            # Set up the mock to return a dummy JWT token
+            mock_encode.return_value = "dummy.jwt.token"
+            
+            # Mock token URL
+            token_url = "https://auth.example.com/token"
+            
+            # Expected access token that will be returned by the mock server
+            expected_token = "mocked_access_token_12345"
+            
+            # Set up the mock response for the token endpoint
+            responses.add(
+                responses.POST,
+                token_url,
+                json={
+                    "access_token": expected_token,
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                    "scope": "openid"
+                },
+                status=200
+            )
+            
+            # Create credentials with PWJWT parameters
+            cred = Credentials(
+                odm_url="http://localhost:9060/res",
+                client_id="test_client_id",
+                jwt_cert_path=private_key_path,
+                jwt_public_cert_path=public_cert_path,
+                token_url=token_url
+            )
+            
+            # Call get_auth which should make the token request
+            headers = cred.get_auth()
+            
+            # Verify that jwt.encode was called with the correct headers
+            # Get the headers argument from the call
+            args, kwargs = mock_encode.call_args
+            assert 'headers' in kwargs
+            assert 'x5t' in kwargs['headers']
+            
+            # Verify the token request was made
+            assert len(responses.calls) == 1
+            assert responses.calls[0].request.url == token_url
+            
+            # Verify the returned headers contain the expected token
+            assert headers == {
+                'Authorization': f'Bearer {expected_token}',
+                'Content-Type': 'application/json; charset=UTF-8',
+                'accept': 'application/json; charset=UTF-8'
+            }
+            
+            # Test that providing only one of the certificate paths raises an error
+            with pytest.raises(ValueError, match="Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication."):
+                Credentials(
+                    odm_url="http://localhost:9060/res",
+                    client_id="test_client_id",
+                    jwt_cert_path=private_key_path,  # Only providing private key
+                    token_url=token_url
+                ).get_auth()
+                
+            with pytest.raises(ValueError, match="Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication."):
+                Credentials(
+                    odm_url="http://localhost:9060/res",
+                    client_id="test_client_id",
+                    jwt_public_cert_path=public_cert_path,  # Only providing public cert
+                    token_url=token_url
+                ).get_auth()
+    
+    finally:
+        # Clean up temporary files
+        if os.path.exists(private_key_path):
+            os.unlink(private_key_path)
+        if os.path.exists(public_cert_path):
+            os.unlink(public_cert_path)
+
+@responses.activate
+def test_get_auth_pwjwt_with_password_protected_cert():
+    """Test PWJWT authentication with a password-protected certificate."""
+    import tempfile
+    import os
+    from unittest.mock import patch, MagicMock
+    
+    # Create temporary certificate files for testing
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as private_key_file:
+        # This would be an encrypted key in reality, but we'll mock the decryption
+        private_key = """-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFHDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQIkZzwRoNvLt8CAggA
+MAwGCCqGSIb3DQIJBQAwFAYIKoZIhvcNAwcECNDUvECBYigoBI...
+-----END ENCRYPTED PRIVATE KEY-----"""
+        private_key_file.write(private_key.encode())
+        private_key_path = private_key_file.name
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.crt') as public_cert_file:
+        # Test public certificate
+        public_cert = """-----BEGIN CERTIFICATE-----
+MIIDazCCAlOgAwIBAgIUOd70QQlNOIUgFoNNa7QzbdtKWucwDQYJKoZIhvcNAQEL
+BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMzA0MTIxNDQ2NDNaFw0yNDA0...
+-----END CERTIFICATE-----"""
+        public_cert_file.write(public_cert.encode())
+        public_cert_path = public_cert_file.name
+    
+    try:
+        # Mock the cryptography functions for decrypting the private key
+        with patch('cryptography.hazmat.primitives.serialization.load_pem_private_key') as mock_load_key, \
+             patch('cryptography.x509.load_pem_x509_certificate') as mock_load_cert, \
+             patch('cryptography.x509.load_der_x509_certificate') as mock_load_der_cert, \
+             patch('jwt.encode') as mock_encode:
+            
+            # Create a mock key object
+            mock_key = MagicMock()
+            mock_key.private_bytes.return_value = b"-----BEGIN RSA PRIVATE KEY-----\nDecrypted Key Content\n-----END RSA PRIVATE KEY-----"
+            mock_load_key.return_value = mock_key
+            
+            # Create a mock certificate
+            mock_cert = MagicMock()
+            mock_cert.public_bytes.return_value = b"mocked_cert_bytes"
+            mock_load_cert.return_value = mock_cert
+            mock_load_der_cert.return_value = mock_cert
+            
+            # Set up the mock to return a dummy JWT token
+            mock_encode.return_value = "dummy.jwt.token"
+            
+            # Mock token URL
+            token_url = "https://auth.example.com/token"
+            
+            # Expected access token that will be returned by the mock server
+            expected_token = "mocked_access_token_12345"
+            
+            # Set up the mock response for the token endpoint
+            responses.add(
+                responses.POST,
+                token_url,
+                json={
+                    "access_token": expected_token,
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                    "scope": "openid"
+                },
+                status=200
+            )
+            
+            # Create credentials with PWJWT parameters including password
+            cred = Credentials(
+                odm_url="http://localhost:9060/res",
+                client_id="test_client_id",
+                jwt_cert_path=private_key_path,
+                jwt_public_cert_path=public_cert_path,
+                jwt_cert_password="test_password",  # Add password for the certificate
+                token_url=token_url
+            )
+            
+            # Call get_auth which should make the token request
+            headers = cred.get_auth()
+            
+            # Verify that load_pem_private_key was called with the correct password
+            mock_load_key.assert_called_once()
+            args, kwargs = mock_load_key.call_args
+            assert kwargs['password'] == b"test_password"
+            
+            # Verify the token request was made
+            assert len(responses.calls) == 1
+            assert responses.calls[0].request.url == token_url
+            
+            # Verify the returned headers contain the expected token
+            assert headers == {
+                'Authorization': f'Bearer {expected_token}',
+                'Content-Type': 'application/json; charset=UTF-8',
+                'accept': 'application/json; charset=UTF-8'
+            }
+    
+    finally:
+        # Clean up temporary files
+        if os.path.exists(private_key_path):
+            os.unlink(private_key_path)
+        if os.path.exists(public_cert_path):
+            os.unlink(public_cert_path)
+
+@responses.activate
 def test_get_auth_openid_missing_access_token():
     """Test handling when the token response is missing the access_token field."""
     
@@ -233,3 +491,5 @@ def test_get_auth_openid_missing_access_token():
     
     # Verify the token request was made
     assert len(responses.calls) == 1
+
+# Made with Bob
