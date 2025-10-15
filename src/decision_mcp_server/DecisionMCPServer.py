@@ -214,9 +214,7 @@ def parse_arguments():
     parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
     parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
     parser.add_argument("--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
-    parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional, not required when using PWJWT)")
-    parser.add_argument("--jwt_cert_path", type=str, default=os.getenv("JWT_CERT_PATH"), help="Path to the private key certificate for PWJWT authentication (optional)")
-    parser.add_argument("--jwt_public_cert_path", type=str, default=os.getenv("JWT_PUBLIC_CERT_PATH"), help="Path to the public certificate for computing x5t in PWJWT authentication (optional)")
+    parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
     parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
     parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
@@ -248,35 +246,16 @@ def create_credentials(args):
             verify_ssl=verifyssl
         )
     elif args.client_id:  # If OpenID credentials are provided, use them for authentication
-        if args.jwt_cert_path or args.jwt_public_cert_path:  # PWJWT authentication
-            # Ensure both private and public certificates are provided
-            if not args.jwt_cert_path or not args.jwt_public_cert_path:
-                raise ValueError("Both 'jwt_cert_path' and 'jwt_public_cert_path' must be provided for PWJWT authentication.")
-            
-            return Credentials(
-                odm_url=args.url,
-                odm_url_runtime=args.runtime_url,
-                token_url=args.token_url,
-                scope=args.scope,
-                client_id=args.client_id,
-                jwt_cert_path=args.jwt_cert_path,
-                jwt_public_cert_path=args.jwt_public_cert_path,
-                ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
-            )
-        else:  # Standard OpenID authentication with client_secret
-            if not args.client_secret:
-                raise ValueError("Either client_secret or jwt_cert_path must be provided for OpenID authentication.")
-            return Credentials(
-                odm_url=args.url,
-                odm_url_runtime=args.runtime_url,
-                token_url=args.token_url,
-                scope=args.scope,
-                client_id=args.client_id,
-                client_secret=args.client_secret,
-                ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
-            )
+        return Credentials(
+            odm_url=args.url,
+            odm_url_runtime=args.runtime_url,
+            token_url=args.token_url,
+            scope=args.scope,
+            client_id=args.client_id,
+            client_secret=args.client_secret,
+            ssl_cert_path=args.ssl_cert_path,
+            verify_ssl=verifyssl
+        )
     else:  # Default to basic authentication
         if not args.username or not args.password:
             raise ValueError("Username and password must be provided for basic authentication.")

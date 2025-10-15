@@ -116,8 +116,6 @@ def test_get_auth_openid_flow():
     if isinstance(request_body, bytes):
         request_body = request_body.decode('utf-8')
     
-    # Ensure request_body is not None before assertions
-    assert request_body is not None
     assert "grant_type=client_credentials" in request_body
     assert "scope=openid+profile" in request_body
     

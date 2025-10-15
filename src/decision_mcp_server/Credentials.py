@@ -1,8 +1,8 @@
 import requests
 from requests.adapters import HTTPAdapter
-import requests.auth
 import ssl
 from validator_collection import  checkers
+import base64
 import logging
 import json
 import time
