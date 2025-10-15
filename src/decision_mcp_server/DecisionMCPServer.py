@@ -7,6 +7,7 @@ from mcp.server import NotificationOptions, Server
 from pydantic import AnyUrl
 import mcp.server.stdio
 import logging
+import urllib3
 
 from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 from decision_mcp_server.Credentials import Credentials
@@ -18,20 +19,25 @@ import os
 
 class DecisionMCPServer:
     def __init__(self, credentials: Credentials, traces_dir: Optional[str] = None, trace_enable: bool = False, trace_maxsize: int = 50):
+        # Get logger for this class
+        self.logger = logging.getLogger(__name__)
+        
         self.notes: dict[str, str] = {}
         self.repository: dict[str, DecisionServiceDescription] = {}
         
         # Store trace configuration
         self.trace_enable = trace_enable
         self.trace_maxsize = trace_maxsize
-        
+        # Disable Warning
+        urllib3.disable_warnings()
+
         # Set up trace storage with configured parameters if tracing is enabled
         # If traces_dir is None, DiskTraceStorage will use the default path in user's home directory
         if self.trace_enable:
             self.execution_traces = DiskTraceStorage(storage_dir=traces_dir, max_traces=self.trace_maxsize)
         else:
             self.execution_traces = None
-            logging.info("Trace storage is disabled")
+            self.logger.info("Trace storage is disabled")
         
         self.server = Server("decision-mcp-server")
         self.manager = None
@@ -60,7 +66,7 @@ class DecisionMCPServer:
         raise ValueError(f"DecisionService not found: {name}")
 
     async def list_tools(self) -> list[types.Tool]:
-        logging.info("Listing ODM tools")
+        self.logger.info("Listing ODM tools")
         # Ensure manager is initialized before using it
         if self.manager is None:
             self.manager = DecisionServerManager(credentials=self.credentials)
@@ -76,10 +82,10 @@ class DecisionMCPServer:
 
     async def call_tool(self, name: str, arguments: dict | None) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         if self.repository.get(name) is None:
-            logging.error("Tool not found: %s", name)
+            self.logger.error("Tool not found: %s", name)
             raise ValueError(f"Unknown tool: {name}")
 
-        logging.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
+        self.logger.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
         # Ensure manager is initialized before using it
         if self.manager is None:
             self.manager = DecisionServerManager(credentials=self.credentials)
@@ -135,9 +141,9 @@ class DecisionMCPServer:
             trace_id = self.execution_traces.add(trace)
             
             # Log the creation of the trace
-            logging.info(f"Created execution trace with ID: {trace_id}")
+            self.logger.info(f"Created execution trace with ID: {trace_id}")
         else:
-            logging.debug("Trace storage is disabled, not creating execution trace")
+            self.logger.debug("Trace storage is disabled, not creating execution trace")
 
         return [
             types.TextContent(
@@ -150,7 +156,7 @@ class DecisionMCPServer:
     async def list_execution_traces(self) -> list[types.Resource]:
         """Return a list of execution traces as resources."""
         if not self.trace_enable or self.execution_traces is None:
-            logging.info("Trace storage is disabled, returning empty list")
+            self.logger.info("Trace storage is disabled, returning empty list")
             return []
             
         trace_metadata = self.execution_traces.get_all_metadata()
@@ -168,7 +174,7 @@ class DecisionMCPServer:
     async def get_execution_trace(self, trace_id: str) -> Optional[ExecutionToolTrace]:
         """Get a specific execution trace by ID."""
         if not self.trace_enable or self.execution_traces is None:
-            logging.info("Trace storage is disabled, cannot retrieve trace")
+            self.logger.info("Trace storage is disabled, cannot retrieve trace")
             return None
             
         return self.execution_traces.get(trace_id)

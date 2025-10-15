@@ -208,9 +208,13 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
   - **Basic Auth:**  
     - **CLI:** `--username <user> --password <pass>`
     - **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
-  - **OpenID Connect (using Client Credentials):**  
+  - **OpenID Connect (using Client Credentials):**
     - **CLI:** `--client_id <CLIENT_ID> --client_secret <CLIENT_SECRET> --token_url <TOKEN_URL>` and optionally `--scope <scope>`
     - **Env:** `CLIENT_ID=<client_id> CLIENT_SECRET=<client_secret> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>`
+  - **OpenID Connect (using Private Key JWT):**
+    - **CLI:** `--client_id <CLIENT_ID> --jwt_cert_path <PRIVATE_KEY_PATH> --jwt_public_cert_path <PUBLIC_CERT_PATH> --token_url <TOKEN_URL>` and optionally `--scope <scope>` and `--jwt_cert_password <PASSWORD>` if the certificate is password-protected
+    - **Env:** `CLIENT_ID=<client_id> JWT_CERT_PATH=<private_key_path> JWT_PUBLIC_CERT_PATH=<public_cert_path> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>` and `JWT_CERT_PASSWORD=<password>` if the certificate is password-protected
+    - **Note:** Both `jwt_cert_path` and `jwt_public_cert_path` are required for PWJWT authentication. The private key is used for signing the JWT, while the public certificate is used for computing the x5t thumbprint. If the private key is password-protected, provide the password using `jwt_cert_password`.
 
 #### 3. **ODM for Developers (Docker/Local)**
 - **Environment:** Local Docker or Developer Edition
@@ -231,6 +235,9 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication with Cloud Pak for Business Automation                                   |                                         |
 | `--client_id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                             |                                         |
 | `--client_secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                                         |                                         |
+| `--jwt_cert_path` | `JWT_CERT_PATH`     | Path to the private key certificate for PWJWT authentication (required with jwt_public_cert_path)       |                                         |
+| `--jwt_public_cert_path` | `JWT_PUBLIC_CERT_PATH` | Path to the public certificate for computing x5t in PWJWT authentication (required with jwt_cert_path) |                                         |
+| `--jwt_cert_password` | `JWT_CERT_PASSWORD` | Password to decrypt the private key certificate for PKJWT authentication. Only needed if the certificate is password-protected. |                                         |
 | `--token_url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
@@ -466,7 +473,7 @@ By combining rich service descriptions with properly annotated model classes, yo
 - [x] Investigate XOM annotation
 - [x] Investigate How to inject description from Decision Center
 - [x] Store and expose Decision Trace executions as MCP resources
-- [ ] Manage ODM certificate
+- [x] Manage ODM certificate
 - [ ] Declare Structured Output
 - [x] Decide naming convention prefix for Ruleset properties. (tools -> agent/decisionassistant )
 - [x] Verify OpenID Connect authentication

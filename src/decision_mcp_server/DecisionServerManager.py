@@ -295,5 +295,5 @@ class DecisionServerManager:
             return response.json()
         else:
             err = response.content.decode('utf-8')
-            logging.error(f"Request error, status: {response.status_code}, error: {err}")
+            self.logger.error(f"Request error, status: {response.status_code}, error: {err}")
             raise Exception(err)
