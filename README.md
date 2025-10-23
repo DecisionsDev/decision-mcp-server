@@ -186,45 +186,129 @@ IBM watsonx Orchestrate can be augmented with decisions implemented in IBM Opera
 For detailed instructions, see the [IBM watsonx Orchestrate Integration Guide](/docs/IBM-watsonx-orchestrate-guide.md).
 
 ---
-
-
 ## Configuration
 
+### 1. ODM Container Environments & Authentication
 
+Depending on your IBM ODM deployment, use the appropriate authentication/authorization method:
 
-### ODM Container Environments & Authentication
-
-Depending on your IBM ODM deployment, use the appropriate authentication method:
-
-#### 1. **ODM on Cloud Pak for Business Automation**
+#### 1.1. **ODM on Cloud Pak for Business Automation**
 - **Environment:** Cloud Pak for Business Automation (CP4BA)
 - **Authentication:** Zen API Key
-- **CLI:** `--zenapikey <your-zen-api-key>`
-- **Env:** `ZENAPIKEY=<your-zen-api-key>`
+  - **CLI:** `--zenapikey <your-zen-api-key>`
+  - **Env:** `ZENAPIKEY=<your-zen-api-key>`
 
-#### 2. **ODM on Kubernetes**
+#### 1.2. **ODM on Kubernetes**
 - **Environment:** IBM ODM deployed on Kubernetes (including OpenShift)
 - **Authentication:**  
   - **Basic Auth:**  
     - **CLI:** `--username <user> --password <pass>`
     - **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
-  - **OpenID Connect (using Client Credentials):**
+  - **OpenID Connect (using Client Secret):**
     - **CLI:** `--client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --token-url <TOKEN_URL>` and optionally `--scope <scope>`
     - **Env:** `CLIENT_ID=<client_id> CLIENT_SECRET=<client_secret> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>`
   - **OpenID Connect (using Private Key JWT):**
-    - **CLI:** `--client-id <CLIENT_ID> --jwt_cert_path <PRIVATE_KEY_PATH> --jwt_public_cert_path <PUBLIC_CERT_PATH> --token-url <TOKEN_URL>` and optionally `--scope <scope>` and `--jwt_cert_password <PASSWORD>` if the certificate is password-protected
-    - **Env:** `CLIENT_ID=<client_id> JWT_CERT_PATH=<private_key_path> JWT_PUBLIC_CERT_PATH=<public_cert_path> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>` and `JWT_CERT_PASSWORD=<password>` if the certificate is password-protected
-    - **Note:** Both `jwt_cert_path` and `jwt_public_cert_path` are required for PKJWT authentication. The private key is used for signing the JWT, while the public certificate is used for computing the x5t thumbprint. If the private key is password-protected, provide the password using `jwt_cert_password`.
+    - **CLI:** `--client-id <CLIENT_ID> --pkjwt-key-path <PRIVATE_KEY_PATH> --pkjwt-cert-path <CERT_PATH> --token-url <TOKEN_URL>` and optionally `--scope <scope>` and `--pkjwt-key-password <PASSWORD>` if the private key is password-protected.
+    - **Env:** `CLIENT_ID=<client_id> PKJWT_KEY_PATH=<private_key_path> PKJWT_CERT_PATH=<cert_path> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>` and `PKJWT_KEY_PASSWORD=<password>` if the private key is password-protected.
+    >**Note:** Both a private key and its certificate are required for PKJWT authentication. The private key is used for signing the JWT (Json Web Token), while the certificate is used for computing the x5t thumbprint. A password-protected private key can be used. In that case, the password must be specified.
 
-#### 3. **ODM for Developers (Docker/Local)**
+#### 1.3. **ODM for Developers (Docker/Local)**
 - **Environment:** Local Docker or Developer Edition
 - **Authentication:** Basic Auth
-- **CLI:** `--username <user> --password <pass>`
-- **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
+  - **CLI:** `--username <user> --password <pass>`
+  - **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
+
+### 2. Different authentication types: Console vs Runtime
+
+The Decision MCP Server actually communicates with two different ODM components/servers:
+- the RES console
+- the Decision Server Runtime
+
+When these two ODM components are configured to use different authentication types, the Decision MCP Server can be configured accordingly by:
+- specifying all the parameters required to authenticate to both ODM components,
+- and using the additional parameters below:
+  - **CLI:** `--console-auth-type <console_auth_type> --runtime-auth-type <runtime_auth_type>`
+  - **Env:** `CONSOLE_AUTH_TYPE=<console_auth_type> RUNTIME_AUTH_TYPE=<runtime_auth_type>`
+
+    > where `<console_auth_type>` and `<runtime_auth_type>` must take one of the values below:
+    > | auth_type | Description.                                             |
+    > | ----------|--------------------------------------------------------- |
+    > | BASIC     | basic authentication                                     |
+    > | ZEN       | Zen API Key authentication.                              |
+    > | SECRET    | OpenID Connect authentication with a Client Secret       |
+    > | PKJWT     | OpenID Connect authentication with a Private Key (PKJWT) |
+    > | NONE      | No authentication/authorization                          |
+
+> Note: 
+> - Decision MCP Server does not support to use the same authentication type with different credentials
+> - for instance, Basic Auth with two different usernames (one for the RES console, and one for the Runtime)
+> - This is not supported.
+> - The unique user/service account must be configured to have access to both ODM components (see [3. Authorization](#3-authorization) below).
+
+### 3. Authorization
+
+#### 3.1. ODM on Cloud Pak for Business Automation
+
+If ODM is deployed in IBM Cloud Pak for Business Automation, the user/service account used must have a role assigned that grants the Zen permissions below in order to be able to access both the RES Console and the Decision Server Runtime:
+
+  | Zen permissions |
+  |-----------------|
+  | ODM - Monitor decision services in Decision Server |
+  | ODM - Execute decision services in Decision Server |
+
+Read more in [Managing user permissions](https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/25.0.0?topic=access-managing-user-permissions).
+
+#### 3.2. ODM on Kubernetes
+
+If ODM is deployed on Kubernetes, the user/service account used must have the roles below:
+
+  | ODM roles     |
+  |---------------|
+  | resMonitors   |
+  | resExecutors  |
+
+#### 3.3. ODM on Cloud
+
+If ODM is deployed in the managed offering ODM on Cloud, the role below must be assigned to the user/service account used (for the suitable environment (Development / Test / Production)):
+
+  | ODM on Cloud role |
+  |-------------------|
+  | Monitor           |
+
+Read more in [Creating and managing service accounts](https://www.ibm.com/docs/en/dbaoc?topic=access-creating-managing-service-accounts).
+
+
+### 4. Secure connection
+
+#### 4.1. Server certificate
+
+To establish a SSL/TLS secure connection to the server, the Decision MCP server must have access to the certificate used to sign the server certificate.
+
+If a public CA certificate was used to sign the server certificate, the Decision MCP server can find it among the system trusted certificates.
+
+If this is a self-signed certificate, it can be specified :
+  - **CLI:** `--ssl-cert-path <certificate_filename>`
+  - **Env:** `SSL_CERT_PATH=<certificate_filename>`
+
+Alternatively, in dev/test environments, the authenticity of the server can be ignored:
+  - **CLI:** `--verifyssl "False"`
+  - **Env:** `VERIFY_SSL="False"`
+
+#### 4.2. mTLS (mutual TLS)
+
+The server can be configured to check the authenticity of the clients that try to establish a secure connection.
+
+In that case, the Decision MCP server (which acts as a client), must be configured with both a private key and its related certificate (and the server must be configured to trust the clients presenting that certificate when establishing a secure connection).
+
+The parameters below can be specified:
+  - **CLI:** `--mtls-key-path <PRIVATE_KEY_PATH> --mtls-cert-path <CERT_PATH>` and optionally `--mtls-key-password <PASSWORD>` if the private key is password-protected.
+  - **Env:** `MTLS_KEY_PATH=<private_key_path> MTLS_CERT_PATH=<cert_path>` and optionally `MTLS_KEY_PASSWORD=<password>` if the private key is password-protected.
+
+
 
 ---
 
-### Parameters Table
+### Configuration Parameters Table
 
 | CLI Argument      | Environment Variable | Description                                                                                            | Default                                 |
 |-------------------|---------------------|---------------------------------------------------------------------------------------------------------|-----------------------------------------|
@@ -252,7 +336,7 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--trace-enable`  | `TRACE_ENABLE`      | Enable or disable trace storage (`True` or `False`)                                                     | `False`                                 |
 | `--trace-maxsize` | `TRACE_MAXSIZE`     | Maximum number of traces to store before removing oldest traces                                         | `50`                                    |
           
-### Customizing MCP Server Configuration          
+### Decision MCP Server Configuration File          
 
 You can configure the MCP server for clients like Claude Desktop or Cursor AI using a JSON configuration file, which can contain both environment variables and command-line arguments.
 
@@ -394,19 +478,11 @@ When authorization is required (to assess the right to access to the service (RE
 ```
 
 ---
-#### Example 5: Mixed Authentication Types
-
-The Decision MCP Server communicates with two ODM components:
-- the RES console
-- the Decision Server Runtime
-
-These two ODM components can be configured to use two different authentication types. The Decision MCP Server can support this configuration.
+#### Example 5: Different Authentication Types: Console vs Runtime
 
 The example below shows how to configure the Decision MCP Server when:
 - the RES console uses OpenID Connect with PKJWT, and
-- the Decision Server Runtime has been configured 
-  - for mTLS and 
-  - so that all execution requests are accepted (authorization disabled), in which case the mTLS cert/key are sufficient and no other argument are needed
+- the Decision Server Runtime has been configured to use mTLS and have the authorization disabled
 
 ```json
 "args": [
@@ -435,7 +511,7 @@ The example below shows how to configure the Decision MCP Server when:
 
 ---
 
-### Ruleset Properties for MCP Configuration
+### Ruleset Properties for the Decision MCP Server
 
 You can configure how your Decision Server rulesets are exposed as MCP tools by setting specific ruleset properties in IBM ODM. These properties control whether a ruleset is available as a tool and how it's presented to AI assistants.
 
