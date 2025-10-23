@@ -26,7 +26,7 @@ It enables you to:
 
 #### Prerequisites
 
-- Python 3.11+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
   - on macOS: `brew install uv`
   - on Windows: see link above
