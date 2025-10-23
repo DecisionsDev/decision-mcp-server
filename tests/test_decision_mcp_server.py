@@ -63,15 +63,15 @@ def test_server_initialization(decision_server):
         {"zenapikey": "test-key"}
     ),
     (
-        ["--client_id", "test-client", "--client_secret", "test-secret", "--token_url", "http://op/token", "--scope", "openid"],
+        ["--client-id", "test-client", "--client-secret", "test-secret", "--token-url", "http://op/token", "--scope", "openid"],
         {"client_id": "test-client", "client_secret": "test-secret", "token_url": "http://op/token", "scope": "openid"}
     ),
     (
-        ["--pkjwt_cert_path", "/custom/cert/file", "--pkjwt_key_path", "/custom/key/file", "--pkjwt_key_password", "xyz-password"],
+        ["--pkjwt-cert-path", "/custom/cert/file", "--pkjwt-key-path", "/custom/key/file", "--pkjwt-key-password", "xyz-password"],
         {"pkjwt_cert_path": "/custom/cert/file", "pkjwt_key_path": "/custom/key/file", "pkjwt_key_password": "xyz-password"}
     ),
     (
-        ["--mtls_cert_path", "/custom/cert/file", "--mtls_key_path", "/custom/key/file", "--mtls_key_password", "xyz-password"],
+        ["--mtls-cert-path", "/custom/cert/file", "--mtls-key-path", "/custom/key/file", "--mtls-key-password", "xyz-password"],
         {"mtls_cert_path": "/custom/cert/file", "mtls_key_path": "/custom/key/file", "mtls_key_password": "xyz-password"}
     ),
     (
@@ -79,11 +79,11 @@ def test_server_initialization(decision_server):
         {"verifyssl": "False"}
     ),
     (
-        ["--ssl_cert_path", "/custom/cert/file"],
+        ["--ssl-cert-path", "/custom/cert/file"],
         {"ssl_cert_path": "/custom/cert/file"}
     ),
     (
-        ["--console_auth_type", "PKJWT", "--runtime_auth_type", "BASIC"],
+        ["--console-auth-type", "PKJWT", "--runtime-auth-type", "BASIC"],
         {"console_auth_type": "PKJWT", "runtime_auth_type": "BASIC"}
     ),
     (

@@ -211,36 +211,35 @@ class DecisionMCPServer:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Decision MCP Server")
-    parser.add_argument("--url", type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
-
-    parser.add_argument("--runtime-url", type=str, default=os.getenv("ODM_RUNTIME_URL"), help="ODM service URL")
-    parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
-    parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
-    parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
-    parser.add_argument("--client-id", "--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
-    parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
-    parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
-    parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
-    parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
-    parser.add_argument("--ssl_cert_path", type=str, default=os.getenv("SSL_CERT_PATH"), help="Path to the SSL certificate file. If not provided, defaults to system certificates.")
-    parser.add_argument("--pkjwt_cert_path", type=str, default=os.getenv("PKJWT_CERT_PATH"), help="Path to the certificate for PKJWT authentication (mandatory for PKJWT).")
-    parser.add_argument("--pkjwt_key_path",  type=str, default=os.getenv("PKJWT_KEY_PATH"),  help="Path to the private key for PKJWT authentication (mandatory for PKJWT).")
-    parser.add_argument("--pkjwt_key_password", type=str, default=os.getenv("PKJWT_KEY_PASSWORD"), help="Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected.")
-    parser.add_argument("--mtls_cert_path", type=str, default=os.getenv("MTLS_CERT_PATH"), help="Path to the certificate of the client for mutual TLS authentication (mandatory for mTLS).")
-    parser.add_argument("--mtls_key_path",  type=str, default=os.getenv("MTLS_KEY_PATH"),  help="Path to the private key of the client for mutual TLS authentication (mandatory for mTLS).")
-    parser.add_argument("--mtls_key_password", type=str, default=os.getenv("MTLS_KEY_PASSWORD"), help="Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected.")
-    parser.add_argument("--console_auth_type", type=str, default=os.getenv("CONSOLE_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the RES Console")
-    parser.add_argument("--runtime_auth_type", type=str, default=os.getenv("RUNTIME_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the Decision Server Runtime")
+    parser.add_argument("--url",                                        type=str, default=os.getenv("ODM_URL", "http://localhost:9060/res"), help="ODM service URL")
+    parser.add_argument("--runtime-url",        "--runtime_url",        type=str, default=os.getenv("ODM_RUNTIME_URL"), help="ODM service URL")
+    parser.add_argument("--username",                                   type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
+    parser.add_argument("--password",                                   type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
+    parser.add_argument("--zenapikey",                                  type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
+    parser.add_argument("--client-id",          "--client_id",          type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
+    parser.add_argument("--client-secret",      "--client_secret",      type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
+    parser.add_argument("--token-url",          "--token_url",          type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
+    parser.add_argument("--scope",                                      type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
+    parser.add_argument("--verifyssl",                                  type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+    parser.add_argument("--ssl-cert-path",      "--ssl_cert_path",      type=str, default=os.getenv("SSL_CERT_PATH"), help="Path to the SSL certificate file. If not provided, defaults to system certificates.")
+    parser.add_argument("--pkjwt-cert-path",    "--pkjwt_cert_path",    type=str, default=os.getenv("PKJWT_CERT_PATH"), help="Path to the certificate for PKJWT authentication (mandatory for PKJWT).")
+    parser.add_argument("--pkjwt-key-path",     "--pkjwt_key_path",     type=str, default=os.getenv("PKJWT_KEY_PATH"),  help="Path to the private key for PKJWT authentication (mandatory for PKJWT).")
+    parser.add_argument("--pkjwt-key-password", "--pkjwt_key_password", type=str, default=os.getenv("PKJWT_KEY_PASSWORD"), help="Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected.")
+    parser.add_argument("--mtls-cert-path",     "--mtls_cert_path",     type=str, default=os.getenv("MTLS_CERT_PATH"), help="Path to the certificate of the client for mutual TLS authentication (mandatory for mTLS).")
+    parser.add_argument("--mtls-key-path",      "--mtls_key_path",      type=str, default=os.getenv("MTLS_KEY_PATH"),  help="Path to the private key of the client for mutual TLS authentication (mandatory for mTLS).")
+    parser.add_argument("--mtls-key-password",  "--mtls_key_password",  type=str, default=os.getenv("MTLS_KEY_PASSWORD"), help="Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected.")
+    parser.add_argument("--console-auth-type",  "--console_auth_type",  type=str, default=os.getenv("CONSOLE_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the RES Console")
+    parser.add_argument("--runtime-auth-type",  "--runtime_auth_type",  type=str, default=os.getenv("RUNTIME_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the Decision Server Runtime")
     
     # Logging-related arguments
-    parser.add_argument("--log-level", type=str, default=os.getenv("LOG_LEVEL", "INFO"),
+    parser.add_argument("--log-level", "--log_level", type=str, default=os.getenv("LOG_LEVEL", "INFO"),
                         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                         help="Set the logging level (default: INFO)")
     
     # Trace-related arguments
-    parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
-    parser.add_argument("--trace-enable", type=str, default=os.getenv("TRACE_ENABLE", "False"), choices=["True", "False"], help="Enable trace storage. Default is False (trace storage disabled).")
-    parser.add_argument("--trace-maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
+    parser.add_argument("--traces-dir",    "--traces_dir",    type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
+    parser.add_argument("--trace-enable",  "--trace_enable",  type=str, default=os.getenv("TRACE_ENABLE", "False"), choices=["True", "False"], help="Enable trace storage. Default is False (trace storage disabled).")
+    parser.add_argument("--trace-maxsize", "--trace_maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
 
     return parser.parse_args()
 
@@ -334,7 +333,7 @@ async def main():
             datefmt='%Y-%m-%d %H:%M:%S'
         )
     logging.info(f"Logging level set to: {logging.getLevelName(logging_level)}")
-    
+
     console_credentials, runtime_credentials = create_credentials(args)
     # Convert trace_enable from string to boolean
     trace_enable = args.trace_enable != "False"

@@ -209,10 +209,10 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
     - **CLI:** `--username <user> --password <pass>`
     - **Env:** `ODM_USERNAME=<user> ODM_PASSWORD=<pass>`
   - **OpenID Connect (using Client Credentials):**
-    - **CLI:** `--client_id <CLIENT_ID> --client_secret <CLIENT_SECRET> --token_url <TOKEN_URL>` and optionally `--scope <scope>`
+    - **CLI:** `--client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> --token-url <TOKEN_URL>` and optionally `--scope <scope>`
     - **Env:** `CLIENT_ID=<client_id> CLIENT_SECRET=<client_secret> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>`
   - **OpenID Connect (using Private Key JWT):**
-    - **CLI:** `--client_id <CLIENT_ID> --jwt_cert_path <PRIVATE_KEY_PATH> --jwt_public_cert_path <PUBLIC_CERT_PATH> --token_url <TOKEN_URL>` and optionally `--scope <scope>` and `--jwt_cert_password <PASSWORD>` if the certificate is password-protected
+    - **CLI:** `--client-id <CLIENT_ID> --jwt_cert_path <PRIVATE_KEY_PATH> --jwt_public_cert_path <PUBLIC_CERT_PATH> --token-url <TOKEN_URL>` and optionally `--scope <scope>` and `--jwt_cert_password <PASSWORD>` if the certificate is password-protected
     - **Env:** `CLIENT_ID=<client_id> JWT_CERT_PATH=<private_key_path> JWT_PUBLIC_CERT_PATH=<public_cert_path> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>` and `JWT_CERT_PASSWORD=<password>` if the certificate is password-protected
     - **Note:** Both `jwt_cert_path` and `jwt_public_cert_path` are required for PKJWT authentication. The private key is used for signing the JWT, while the public certificate is used for computing the x5t thumbprint. If the private key is password-protected, provide the password using `jwt_cert_password`.
 
@@ -233,20 +233,20 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--username`      | `ODM_USERNAME`      | Username for Basic Auth or Zen authentication                                                           | `odmAdmin`                              |
 | `--password`      | `ODM_PASSWORD`      | Password for Basic Auth                                                                                 | `odmAdmin`                              |
 | `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication with Cloud Pak for Business Automation                                   |                                         |
-| `--client_id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                             |                                         |
-| `--client_secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                                         |                                         |
-| `--pkjwt_cert_path` | `PKJWT_CERT_PATH` | Path to the certificate for PKJWT authentication (mandatory for PKJWT)                                  |                                         |
-| `--pkjwt_key_path` | `PKJWT_KEY_PATH`   | Path to the private key certificate for PKJWT authentication (mandatory for PKJWT)                      |                                         |
-| `--pkjwt_key_password` | `PKJWT_KEY_PASSWORD` | Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected. |                               |
-| `--token_url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
+| `--client-id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                             |                                         |
+| `--client-secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                                         |                                         |
+| `--pkjwt-cert-path` | `PKJWT_CERT_PATH` | Path to the certificate for PKJWT authentication (mandatory for PKJWT)                                  |                                         |
+| `--pkjwt-key-path` | `PKJWT_KEY_PATH`   | Path to the private key certificate for PKJWT authentication (mandatory for PKJWT)                      |                                         |
+| `--pkjwt-key-password` | `PKJWT_KEY_PASSWORD` | Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected. |                               |
+| `--token-url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
-| `--ssl_cert_path` | `SSL_CERT_PATH`     | Path to the SSL certificate file. If not provided, defaults to system certificates.                     |                                         |
-| `--mtls_cert_path`| `MTLS_CERT_PATH`    | Path to the SSL certificate file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
-| `--mtls_key_path` | `MTLS_KEY_PATH`     | Path to the SSL private key file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
-| `--mtls_key_password` | `MTLS_KEY_PASSWORD` | Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected. |              |
-| `--console_auth_type` | `CONSOLE_AUTH_TYPE` | Explicitly set the authentication type for the RES console (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`)      |                                 |
-| `--runtime_auth_type` | `RUNTIME_AUTH_TYPE` | Explicitly set the authentication type for the Decision Server Runtime (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`) |                          |
+| `--ssl-cert-path` | `SSL_CERT_PATH`     | Path to the SSL certificate file. If not provided, defaults to system certificates.                     |                                         |
+| `--mtls-cert-path`| `MTLS_CERT_PATH`    | Path to the SSL certificate file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
+| `--mtls-key-path` | `MTLS_KEY_PATH`     | Path to the SSL private key file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
+| `--mtls-key-password` | `MTLS_KEY_PASSWORD` | Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected. |              |
+| `--console-auth-type` | `CONSOLE_AUTH_TYPE` | Explicitly set the authentication type for the RES console (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`)      |                                 |
+| `--runtime-auth-type` | `RUNTIME_AUTH_TYPE` | Explicitly set the authentication type for the Decision Server Runtime (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`) |                          |
 | `--log-level`     | `LOG_LEVEL`         | Set the logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`)                                 | `INFO`                                  |
 | `--traces-dir`    | `TRACES_DIR`        | Directory to store execution traces                                                                     | `~/.mcp-server/traces`                  |
 | `--trace-enable`  | `TRACE_ENABLE`      | Enable or disable trace storage (`True` or `False`)                                                     | `False`                                 |
@@ -273,7 +273,7 @@ The example below shows a typical use-case where the sensitive information (here
         "git+https://github.com/DecisionsDev/decision-mcp-server",
         "decision-mcp-server",
         "--url", "https://odm-res-console-url",
-        "--ssl_cert_path", "certificate-file",
+        "--ssl-cert-path", "certificate-file",
         "--username", "your-username"
       ],
       "env": {
@@ -284,7 +284,7 @@ The example below shows a typical use-case where the sensitive information (here
 }
 ```
 
-The examples below demonstrates various use cases depending on the type of deployment (dev/test or production), and environments (CloudPak, ...).
+The examples below demonstrate various use cases depending on the type of deployment (dev/test or production), and environments (CloudPak, ...).
 
 ---
 #### Example 1: Basic Auth for Local Development
@@ -315,7 +315,7 @@ For production deployments on the Cloud Pak, use the Zen API Key.
   "git+https://github.com/DecisionsDev/decision-mcp-server",
   "decision-mcp-server",
   "--url",           "https://odm-res-console-url",
-  "--ssl_cert_path", "certificate-file",
+  "--ssl-cert-path", "certificate-file",
   "--username",      "YOUR_ZENUSERNAME"
 ],
 "env": {
@@ -340,8 +340,8 @@ Two authentication variants are possible:
   "decision-mcp-server",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
-  "--ssl_cert_path", "certificate-file",
-  "--token_url",     "https://your-openid-connect_provider-token-endpoint-url",
+  "--ssl-cert-path", "certificate-file",
+  "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
 ],
 "env": {
@@ -358,8 +358,8 @@ Two authentication variants are possible:
   "decision-mcp-server",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
-  "--ssl_cert_path", "certificate-file",
-  "--token_url",     "https://your-openid-connect_provider-token-endpoint-url",
+  "--ssl-cert-path", "certificate-file",
+  "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
 ],
 "env": {
@@ -374,7 +374,7 @@ Two authentication variants are possible:
 
 The Decision MCP Server also supports mTLS (mutual TLS) authentication, which secure the SSL connection further.
 
-When authorization is required, mTLS is not self-sufficient. In the example below it is combined with basic auth:
+When authorization is required (to assess the right to access to the service (RES console and/or Decision Service Runtime)), mTLS must be complemented with another means of authentication/authorization, for instance with basic auth in the example below:
 
 ```json
 "args": [
@@ -383,7 +383,7 @@ When authorization is required, mTLS is not self-sufficient. In the example belo
   "decision-mcp-server",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
-  "--ssl_cert_path", "certificate-file",
+  "--ssl-cert-path", "certificate-file",
   "--username",      "SERVICE_ACCOUNT"
 ],
 "env": {
@@ -415,13 +415,13 @@ The example below shows how to configure the Decision MCP Server when:
   "decision-mcp-server",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
-  "--ssl_cert_path", "certificate-file",
+  "--ssl-cert-path", "certificate-file",
 
-  "--console_auth_type", "PKJWT",
-  "--token_url",         "https://your-openid-connect_provider-token-endpoint-url",
+  "--console-auth-type", "PKJWT",
+  "--token-url",         "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",             "the_scope_to_be_used_for_client_credentials",
 
-  "--runtime_auth_type", "NONE"
+  "--runtime-auth-type", "NONE"
 ],
 "env": {
   "CLIENT_ID":       "YOUR_CLIENT_ID",
