@@ -18,7 +18,7 @@ import argparse
 import os
 
 class DecisionMCPServer:
-    def __init__(self, credentials: Credentials, traces_dir: Optional[str] = None, trace_enable: bool = False, trace_maxsize: int = 50):
+    def __init__(self, console_credentials: Credentials, runtime_credentials: Credentials, traces_dir: Optional[str] = None, trace_enable: bool = False, trace_maxsize: int = 50):
         # Get logger for this class
         self.logger = logging.getLogger(__name__)
         
@@ -41,7 +41,8 @@ class DecisionMCPServer:
         
         self.server = Server("decision-mcp-server")
         self.manager = None
-        self.credentials = credentials
+        self.console_credentials = console_credentials
+        self.runtime_credentials = runtime_credentials
         
 
     async def list_resources(self) -> list[types.Resource]:
@@ -69,7 +70,8 @@ class DecisionMCPServer:
         self.logger.info("Listing ODM tools")
         # Ensure manager is initialized before using it
         if self.manager is None:
-            self.manager = DecisionServerManager(credentials=self.credentials)
+            self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
+                                                 runtime_credentials=self.runtime_credentials)
             
         rulesets = self.manager.fetch_rulesets()
         extractedTools = self.manager.generate_tools_format(rulesets)
@@ -88,7 +90,8 @@ class DecisionMCPServer:
         self.logger.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
         # Ensure manager is initialized before using it
         if self.manager is None:
-            self.manager = DecisionServerManager(credentials=self.credentials)
+            self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
+                                                 runtime_credentials=self.runtime_credentials)
 
         # this call may throw an exception, handled by Server.call_tool.handler
         result = self.manager.invokeDecisionService(
@@ -181,7 +184,8 @@ class DecisionMCPServer:
 
     async def start(self):
 
-        self.manager = DecisionServerManager(credentials=self.credentials)
+        self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
+                                             runtime_credentials=self.runtime_credentials)
 
         # Register handlers
         self.server.list_resources()(self.list_resources)
@@ -213,12 +217,20 @@ def parse_arguments():
     parser.add_argument("--username", type=str, default=os.getenv("ODM_USERNAME", "odmAdmin"), help="ODM username (optional)")
     parser.add_argument("--password", type=str, default=os.getenv("ODM_PASSWORD", "odmAdmin"), help="ODM password (optional)")
     parser.add_argument("--zenapikey", type=str, default=os.getenv("ZENAPIKEY"), help="Zen API Key (optional)")
-    parser.add_argument("--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
+    parser.add_argument("--client-id", "--client_id", type=str, default=os.getenv("CLIENT_ID"), help="OpenID Client ID (optional)")
     parser.add_argument("--client_secret", type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
     parser.add_argument("--token_url", type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
     parser.add_argument("--scope", type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
     parser.add_argument("--verifyssl", type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
     parser.add_argument("--ssl_cert_path", type=str, default=os.getenv("SSL_CERT_PATH"), help="Path to the SSL certificate file. If not provided, defaults to system certificates.")
+    parser.add_argument("--pkjwt_cert_path", type=str, default=os.getenv("PKJWT_CERT_PATH"), help="Path to the certificate for PKJWT authentication (mandatory for PKJWT).")
+    parser.add_argument("--pkjwt_key_path",  type=str, default=os.getenv("PKJWT_KEY_PATH"),  help="Path to the private key for PKJWT authentication (mandatory for PKJWT).")
+    parser.add_argument("--pkjwt_key_password", type=str, default=os.getenv("PKJWT_KEY_PASSWORD"), help="Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected.")
+    parser.add_argument("--mtls_cert_path", type=str, default=os.getenv("MTLS_CERT_PATH"), help="Path to the certificate of the client for mutual TLS authentication (mandatory for mTLS).")
+    parser.add_argument("--mtls_key_path",  type=str, default=os.getenv("MTLS_KEY_PATH"),  help="Path to the private key of the client for mutual TLS authentication (mandatory for mTLS).")
+    parser.add_argument("--mtls_key_password", type=str, default=os.getenv("MTLS_KEY_PASSWORD"), help="Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected.")
+    parser.add_argument("--console_auth_type", type=str, default=os.getenv("CONSOLE_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the RES Console")
+    parser.add_argument("--runtime_auth_type", type=str, default=os.getenv("RUNTIME_AUTH_TYPE"), choices=["BASIC", "ZEN", "PKJWT", "SECRET", "NONE"], help="Explicitly set the authentication type for the Decision Server Runtime")
     
     # Logging-related arguments
     parser.add_argument("--log-level", type=str, default=os.getenv("LOG_LEVEL", "INFO"),
@@ -229,44 +241,77 @@ def parse_arguments():
     parser.add_argument("--traces-dir", type=str, default=os.getenv("TRACES_DIR"), help="Directory to store execution traces (optional). If not provided, traces will be stored in the 'traces' directory in the project root.")
     parser.add_argument("--trace-enable", type=str, default=os.getenv("TRACE_ENABLE", "False"), choices=["True", "False"], help="Enable trace storage. Default is False (trace storage disabled).")
     parser.add_argument("--trace-maxsize", type=int, default=int(os.getenv("TRACE_MAXSIZE", "50")), help="Maximum number of traces to store (default: 50)")
-            
 
     return parser.parse_args()
 
 def create_credentials(args):
-    verifyssl = args.verifyssl != "False"
 
-    if args.zenapikey:  # If zenapikey is provided, use it for authentication
-        return Credentials(
-            odm_url=args.url,
-            odm_url_runtime=args.runtime_url,
-            username=args.username,
-            zenapikey=args.zenapikey,
-            ssl_cert_path=args.ssl_cert_path,
-            verify_ssl=verifyssl
-        )
-    elif args.client_id:  # If OpenID credentials are provided, use them for authentication
-        return Credentials(
-            odm_url=args.url,
-            odm_url_runtime=args.runtime_url,
-            token_url=args.token_url,
-            scope=args.scope,
-            client_id=args.client_id,
-            client_secret=args.client_secret,
-            ssl_cert_path=args.ssl_cert_path,
-            verify_ssl=verifyssl
-        )
-    else:  # Default to basic authentication
-        if not args.username or not args.password:
-            raise ValueError("Username and password must be provided for basic authentication.")
-        return Credentials(
-            odm_url=args.url,
-            odm_url_runtime=args.runtime_url,
-            username=args.username,
-            password=args.password,
-            ssl_cert_path=args.ssl_cert_path,
-            verify_ssl=verifyssl
-        )
+    def create_credentials(args, auth_type, url):
+        verifyssl = args.verifyssl != "False"
+
+        if (args.zenapikey and (auth_type is None or auth_type == "ZEN")):    # If zenapikey is provided, use it for authentication, unless another authentication type is specified
+            return Credentials(
+                odm_url=url,
+                username=args.username,
+                zenapikey=args.zenapikey,
+                mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
+                ssl_cert_path=args.ssl_cert_path,
+                verify_ssl=verifyssl
+            )
+        elif (args.client_secret and (auth_type is None or auth_type == "SECRET")):  # OpenID Client Secret provided
+            return Credentials(
+                odm_url=url,
+                token_url=args.token_url,
+                scope=args.scope,
+                client_id=args.client_id,
+                client_secret=args.client_secret,
+                mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
+                ssl_cert_path=args.ssl_cert_path,
+                verify_ssl=verifyssl
+            )
+        elif (args.pkjwt_key_path and (auth_type is None or auth_type == "PKJWT")):  # OpenID PKJWT
+            return Credentials(
+                odm_url=url,
+                token_url=args.token_url,
+                scope=args.scope,
+                client_id=args.client_id,
+                pkjwt_cert_path=args.pkjwt_cert_path, pkjwt_key_path=args.pkjwt_key_path, pkjwt_key_password=args.pkjwt_key_password,
+                mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
+                ssl_cert_path=args.ssl_cert_path,
+                verify_ssl=verifyssl
+            )
+        elif (args.mtls_key_path and auth_type and auth_type == "NONE"):  # mTLS without authentication
+            return Credentials(
+                odm_url=url,
+                mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
+                ssl_cert_path=args.ssl_cert_path,
+                verify_ssl=verifyssl
+            )
+        else:  # Default to basic authentication
+            if not args.username or not args.password:
+                raise ValueError("Username and password must be provided for basic authentication.")
+            return Credentials(
+                odm_url=url,
+                username=args.username,
+                password=args.password,
+                mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
+                ssl_cert_path=args.ssl_cert_path,
+                verify_ssl=verifyssl
+            )
+
+    if args.runtime_url is not None:
+        odm_url_runtime=args.runtime_url
+    else:
+        odm_url_runtime=args.odm_url.rstrip('/')
+        # replace 'res' with 'DecisionService'
+        if odm_url_runtime.endswith('res'):
+            odm_url_runtime=odm_url_runtime[:-3] + 'DecisionService'
+
+    console_credentials = create_credentials(args, args.console_auth_type, args.url)
+    runtime_credentials = create_credentials(args, args.runtime_auth_type, odm_url_runtime)
+
+    return console_credentials, runtime_credentials
+    
 async def main():
     """Main entry point for the Decision MCP Server."""
     args = parse_arguments()
@@ -290,12 +335,13 @@ async def main():
         )
     logging.info(f"Logging level set to: {logging.getLevelName(logging_level)}")
     
-    credentials = create_credentials(args)
+    console_credentials, runtime_credentials = create_credentials(args)
     # Convert trace_enable from string to boolean
     trace_enable = args.trace_enable != "False"
     
     server = DecisionMCPServer(
-        credentials=credentials,
+        console_credentials=console_credentials,
+        runtime_credentials=runtime_credentials,
         traces_dir=args.traces_dir,
         trace_enable=trace_enable,
         trace_maxsize=args.trace_maxsize

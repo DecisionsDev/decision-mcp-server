@@ -8,7 +8,8 @@ import pytest
 import responses
 import json
 import requests  # Add this line to import the requests module
-from decision_mcp_server.Credentials import Credentials
+from unittest.mock import patch, Mock
+from decision_mcp_server.Credentials import Credentials, CustomHTTPAdapter
 
 def get_test_credentials():
     return Credentials(
@@ -25,7 +26,6 @@ def test_valid_url():
 def test_url_with_trailing_slash():
     # Test with a URL that has a trailing slash
     cred = Credentials(odm_url="http://localhost:9060/res/", username="user", password="pass")
-    print(cred.odm_url)
     assert cred.odm_url == "http://localhost:9060/res"
 
 def test_url_with_extra_path():
@@ -50,7 +50,7 @@ def test_get_auth_zenapikey():
 
 def test_get_auth_missusername_zenapikey():
     # Test get_auth with zenapikey
-     with pytest.raises(ValueError, match="Username must be provided when using zenapikey."):
+    with pytest.raises(ValueError, match="Username must be provided when using zenapikey."):
         cred = Credentials(odm_url="http://localhost:9060/res", zenapikey="test_key", username=None)
         cred.get_auth()
     
@@ -68,8 +68,11 @@ def test_get_auth_basic_auth():
 def test_get_auth_no_credentials():
     # Test get_auth with no credentials
     cred = Credentials(odm_url="http://localhost:9060/res")
-    with pytest.raises(ValueError, match="Either username and password, bearer token, or zenapikey must be provided."):
-        cred.get_auth()
+    headers = cred.get_auth()
+    assert headers == {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'accept': 'application/json; charset=UTF-8'
+    }
 
 @responses.activate
 def test_get_auth_openid_flow():
@@ -116,6 +119,8 @@ def test_get_auth_openid_flow():
     if isinstance(request_body, bytes):
         request_body = request_body.decode('utf-8')
     
+    # Make sure request_body is not None before checking content
+    assert request_body is not None
     assert "grant_type=client_credentials" in request_body
     assert "scope=openid+profile" in request_body
     
@@ -198,8 +203,8 @@ def test_get_auth_openid_malformed_response():
     assert len(responses.calls) == 1
 
 @responses.activate
-def test_get_auth_pwjwt_with_public_cert():
-    """Test PWJWT authentication with a public certificate for x5t computation."""
+def test_get_auth_pkjwt_with_public_cert():
+    """Test PKJWT authentication with a public certificate for x5t computation."""
     import tempfile
     import os
     import base64
@@ -299,12 +304,12 @@ C+Z2TPt8VQQNt+Z1H5t2K+MG8ky6bo3QaSNBXOPHVnK/TQ0S171JfQDmzXJSPVEr
                 status=200
             )
             
-            # Create credentials with PWJWT parameters
+            # Create credentials with PKJWT parameters
             cred = Credentials(
                 odm_url="http://localhost:9060/res",
                 client_id="test_client_id",
-                jwt_cert_path=private_key_path,
-                jwt_public_cert_path=public_cert_path,
+                pkjwt_key_path=private_key_path,
+                pkjwt_cert_path=public_cert_path,
                 token_url=token_url
             )
             
@@ -329,19 +334,19 @@ C+Z2TPt8VQQNt+Z1H5t2K+MG8ky6bo3QaSNBXOPHVnK/TQ0S171JfQDmzXJSPVEr
             }
             
             # Test that providing only one of the certificate paths raises an error
-            with pytest.raises(ValueError, match="Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication."):
+            with pytest.raises(ValueError, match="Both 'pkjwt_key_path' and 'pkjwt_cert_path' are required for PKJWT authentication."):
                 Credentials(
                     odm_url="http://localhost:9060/res",
                     client_id="test_client_id",
-                    jwt_cert_path=private_key_path,  # Only providing private key
+                    pkjwt_key_path=private_key_path,  # Only providing private key
                     token_url=token_url
                 ).get_auth()
                 
-            with pytest.raises(ValueError, match="Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication."):
+            with pytest.raises(ValueError, match="Both 'pkjwt_key_path' and 'pkjwt_cert_path' are required for PKJWT authentication."):
                 Credentials(
                     odm_url="http://localhost:9060/res",
                     client_id="test_client_id",
-                    jwt_public_cert_path=public_cert_path,  # Only providing public cert
+                    pkjwt_cert_path=public_cert_path,  # Only providing certificate
                     token_url=token_url
                 ).get_auth()
     
@@ -353,8 +358,8 @@ C+Z2TPt8VQQNt+Z1H5t2K+MG8ky6bo3QaSNBXOPHVnK/TQ0S171JfQDmzXJSPVEr
             os.unlink(public_cert_path)
 
 @responses.activate
-def test_get_auth_pwjwt_with_password_protected_cert():
-    """Test PWJWT authentication with a password-protected certificate."""
+def test_get_auth_pkjwt_with_password_protected_cert():
+    """Test PKJWT authentication with a password-protected certificate."""
     import tempfile
     import os
     from unittest.mock import patch, MagicMock
@@ -419,13 +424,13 @@ GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMzA0MTIxNDQ2NDNaFw0yNDA0...
                 status=200
             )
             
-            # Create credentials with PWJWT parameters including password
+            # Create credentials with PKJWT parameters
             cred = Credentials(
                 odm_url="http://localhost:9060/res",
                 client_id="test_client_id",
-                jwt_cert_path=private_key_path,
-                jwt_public_cert_path=public_cert_path,
-                jwt_cert_password="test_password",  # Add password for the certificate
+                pkjwt_key_path=private_key_path,
+                pkjwt_cert_path=public_cert_path,
+                pkjwt_key_password="test_password",  # Add password for the certificate
                 token_url=token_url
             )
             
@@ -491,5 +496,278 @@ def test_get_auth_openid_missing_access_token():
     
     # Verify the token request was made
     assert len(responses.calls) == 1
+
+# Test get_session method
+def test_get_session_https_with_verify():
+    """Test get_session with HTTPS URL and SSL verification enabled."""
+    with patch('requests.Session') as mock_session_class, \
+         patch('decision_mcp_server.Credentials.CustomHTTPAdapter') as mock_adapter_class:
+        
+        # Setup mocks
+        mock_session = mock_session_class.return_value
+        mock_adapter = mock_adapter_class.return_value
+        
+        # Create credentials with HTTPS URL and SSL verification enabled
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass",
+            verify_ssl=True
+        )
+        
+        # Call get_session
+        session = cred.get_session()
+        
+        # Verify session was created and configured correctly
+        assert mock_session_class.called
+        assert mock_adapter_class.called
+        assert mock_session.mount.called
+        assert mock_session.mount.call_args[0][0] == 'https://'
+        assert mock_session.mount.call_args[0][1] == mock_adapter
+        assert mock_session.verify is True
+        assert session == mock_session
+
+def test_get_session_http_no_verify():
+    """Test get_session with HTTP URL (no SSL verification needed)."""
+    with patch('requests.Session') as mock_session_class, \
+         patch('urllib3.disable_warnings') as mock_disable_warnings:
+        
+        # Setup mocks
+        mock_session = mock_session_class.return_value
+        
+        # Create credentials with HTTP URL
+        cred = Credentials(
+            odm_url="http://localhost:9060/res",
+            username="user",
+            password="pass"
+        )
+        
+        # Call get_session
+        session = cred.get_session()
+        
+        # Verify session was created and configured correctly
+        assert mock_session_class.called
+        assert mock_disable_warnings.called  # Should still be called even for HTTP
+        assert mock_session.verify is False
+        assert session == mock_session
+
+def test_get_session_https_no_verify():
+    """Test get_session with HTTPS URL but SSL verification disabled."""
+    with patch('requests.Session') as mock_session_class, \
+         patch('urllib3.disable_warnings') as mock_disable_warnings:
+        
+        # Setup mocks
+        mock_session = mock_session_class.return_value
+        
+        # Create credentials with HTTPS URL but verification disabled
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass",
+            verify_ssl=False
+        )
+        
+        # Call get_session
+        session = cred.get_session()
+        
+        # Verify session was created and configured correctly
+        assert mock_session_class.called
+        assert mock_disable_warnings.called
+        assert mock_session.verify is False
+        assert session == mock_session
+
+def test_get_session_with_mtls():
+    """Test get_session with mTLS configuration."""
+    import tempfile
+    import os
+
+    with patch('requests.Session') as mock_session_class, \
+         patch('decision_mcp_server.Credentials.Credentials.mtls_cert_tuple') as mock_mtls_cert_tuple, \
+         tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_file:
+
+        key_file.write(b"-----BEGIN PRIVATE KEY-----\ncontent\n-----END PRIVATE KEY-----")
+        key_path = key_file.name
+
+        # Setup mocks
+        mock_session = mock_session_class.return_value
+        mock_mtls_cert_tuple.return_value = ('/path/to/cert', key_path)
+        
+        try:
+            # Create credentials with mTLS configuration
+            cred = Credentials(
+                odm_url="https://localhost:9060/res",
+                username="user",
+                password="pass",
+                mtls_cert_path="/path/to/cert",
+                mtls_key_path=key_path
+            )
+            
+            # Call get_session
+            session = cred.get_session()
+            
+            # Verify session was created and configured correctly
+            assert mock_session_class.called
+            assert mock_mtls_cert_tuple.called
+            assert session.cert == ('/path/to/cert', key_path)
+            assert session == mock_session
+
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(key_path):
+                os.unlink(key_path)
+
+# Test mtls_cert_tuple method
+def test_mtls_cert_tuple_no_password():
+    """Test mtls_cert_tuple method without password."""
+    import tempfile
+    import os
+
+    # Create a temporary key file
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_file:
+        # This is just a placeholder, the actual content doesn't matter as we'll mock the decryption
+        key_file.write(b"-----BEGIN PRIVATE KEY-----\ncontent\n-----END PRIVATE KEY-----")
+        key_path = key_file.name
+
+    try:
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass",
+            mtls_cert_path="/path/to/cert",
+            mtls_key_path=key_path
+        )
+        
+        cert_tuple = cred.mtls_cert_tuple()
+        assert cert_tuple == ("/path/to/cert", key_path)
+
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(key_path):
+            os.unlink(key_path)
+
+# Test cleanup method
+def test_cleanup_with_unencrypted_key():
+    """Test cleanup method when an unencrypted key file was created."""
+    with patch('os.remove') as mock_remove:
+        # Create credentials with mTLS configuration and set unencrypted key path
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass"
+        )
+        cred.mtls_key_password = "secret"  # This would trigger cleanup
+        cred.mtls_unencrypted_key_path = "/tmp/unencrypted_key"
+        
+        # Call cleanup
+        cred.cleanup()
+        
+        # Verify temporary file was removed
+        mock_remove.assert_called_with("/tmp/unencrypted_key")
+
+def test_cleanup_without_unencrypted_key():
+    """Test cleanup method when no unencrypted key file was created."""
+    with patch('os.remove') as mock_remove:
+        # Create credentials without mTLS password
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass"
+        )
+        
+        # Call cleanup
+        cred.cleanup()
+        
+        # Verify os.remove was not called
+        mock_remove.assert_not_called()
+
+# Test error cases for OpenID authentication
+def test_get_auth_missing_token_url():
+    """Test get_auth with missing token_url for OpenID authentication."""
+    cred = Credentials(
+        odm_url="http://localhost:9060/res",
+        client_id="client_id",
+        client_secret="client_secret"
+        # token_url is missing
+    )
+    
+    with pytest.raises(ValueError, match="Both 'client_id' and 'token_url' are required for OpenId authentication."):
+        cred.get_auth()
+
+def test_get_auth_missing_client_id():
+    """Test get_auth with missing client_id for OpenID authentication."""
+    cred = Credentials(
+        odm_url="http://localhost:9060/res",
+        # client_id is missing
+        client_secret="client_secret",
+        token_url="http://auth.example.com/token"
+    )
+    
+    with pytest.raises(ValueError, match="Both 'client_id' and 'token_url' are required for OpenId authentication."):
+        cred.get_auth()
+
+def test_get_auth_missing_client_secret():
+    """Test get_auth with missing client_secret for standard OpenID authentication."""
+    cred = Credentials(
+        odm_url="http://localhost:9060/res",
+        client_id="client_id",
+        # client_secret is missing
+        token_url="http://auth.example.com/token"
+    )
+    
+    with pytest.raises(ValueError, match="Either 'client_secret' or 'pkjwt_key_path' is required for OpenId authentication."):
+        cred.get_auth()
+
+def test_get_unencrypted_key_data_wrong_password():
+    """Test get_unencrypted_key_data with wrong password."""
+    import tempfile
+    import os
+    
+    # Create a temporary encrypted key file
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_file:
+        # This is just a placeholder, the actual content doesn't matter as we'll mock the decryption
+        key_file.write(b"""-----BEGIN ENCRYPTED PRIVATE KEY-----
+some content
+-----END ENCRYPTED PRIVATE KEY-----""")
+        key_path = key_file.name
+    
+    try:        
+        # Mock the decryption to fail
+        with patch('cryptography.hazmat.primitives.serialization.load_pem_private_key') as mock_load_key:
+            mock_load_key.side_effect = Exception("Incorrect password, could not decrypt key")
+
+            with pytest.raises(ValueError, match="Failed to decrypt private key with provided password: Incorrect password, could not decrypt key"):
+                cred = Credentials(
+                    odm_url="http://localhost:9060/res",
+                    username="user",
+                    password="pass",
+                    mtls_key_path=key_path,
+                    mtls_key_password="some password",
+                    mtls_cert_path="some path"
+                )
+                cred.get_unencrypted_key_data(key_path, "wrong_password")
+    
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(key_path):
+            os.unlink(key_path)
+
+# Test SSL certificate path handling
+def test_ssl_cert_path():
+    """Test SSL certificate path handling."""
+    with patch('decision_mcp_server.Credentials.CustomHTTPAdapter') as mock_adapter_class:
+        # Create credentials with custom SSL cert path
+        cred = Credentials(
+            odm_url="https://localhost:9060/res",
+            username="user",
+            password="pass",
+            verify_ssl=True,
+            ssl_cert_path="/path/to/custom/cert"
+        )
+        
+        # Get session to trigger adapter creation
+        cred.get_session()
+        
+        # Verify adapter was created with the correct cert path
+        mock_adapter_class.assert_called_with(certfile="/path/to/custom/cert")
 
 # Made with Bob

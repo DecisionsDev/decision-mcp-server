@@ -71,12 +71,13 @@ def test_fetch_rulesets(caplog):
     import os
     # Use environment variables or default to mock values for testing
     credentials = Credentials(
-    odm_url='http://localhost:8885/res',
+        odm_url='http://localhost:8885/res',
         username=os.environ.get('TEST_USERNAME', 'mock_bearer_token'),
         password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
 )
     manager = DecisionServerManager(
-        credentials=credentials
+        console_credentials=credentials,
+        runtime_credentials=credentials
     )
 
     # Capture the output of the fetch_rulesets method
@@ -148,7 +149,8 @@ def test_get_input_schema():
         password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
-    manager = DecisionServerManager(credentials)
+    manager = DecisionServerManager(console_credentials=credentials,
+                                    runtime_credentials=credentials)
     
     # Mock the get_ruleset_openapi method
     original_get_ruleset_openapi = manager.get_ruleset_openapi
@@ -209,7 +211,8 @@ def test_agent_name_handling():
         password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
-    manager = DecisionServerManager(credentials)
+    manager = DecisionServerManager(console_credentials=credentials,
+                                    runtime_credentials=credentials)
     
     # Mock the get_input_schema method to return a simple schema
     original_get_input_schema = manager.get_input_schema
@@ -283,7 +286,8 @@ def test_tools_name_and_description_handling():
         password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
-    manager = DecisionServerManager(credentials)
+    manager = DecisionServerManager(console_credentials=credentials,
+                                    runtime_credentials=credentials)
     
     # Mock the get_input_schema method to return a simple schema
     original_get_input_schema = manager.get_input_schema
@@ -402,7 +406,8 @@ def test_extract_highest_version_rulesets_agent_enabled():
         password=os.environ.get('TEST_PASSWORD', 'mock_password_placeholder'),
     )
     
-    manager = DecisionServerManager(credentials)
+    manager = DecisionServerManager(console_credentials=credentials,
+                                    runtime_credentials=credentials)
     
     # Call extract_highest_version_rulesets
     result = manager.extract_highest_version_rulesets(test_data)

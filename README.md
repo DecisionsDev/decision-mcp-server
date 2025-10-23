@@ -214,7 +214,7 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
   - **OpenID Connect (using Private Key JWT):**
     - **CLI:** `--client_id <CLIENT_ID> --jwt_cert_path <PRIVATE_KEY_PATH> --jwt_public_cert_path <PUBLIC_CERT_PATH> --token_url <TOKEN_URL>` and optionally `--scope <scope>` and `--jwt_cert_password <PASSWORD>` if the certificate is password-protected
     - **Env:** `CLIENT_ID=<client_id> JWT_CERT_PATH=<private_key_path> JWT_PUBLIC_CERT_PATH=<public_cert_path> TOKEN_URL=<URL>` and optionally `SCOPE=<scope>` and `JWT_CERT_PASSWORD=<password>` if the certificate is password-protected
-    - **Note:** Both `jwt_cert_path` and `jwt_public_cert_path` are required for PWJWT authentication. The private key is used for signing the JWT, while the public certificate is used for computing the x5t thumbprint. If the private key is password-protected, provide the password using `jwt_cert_password`.
+    - **Note:** Both `jwt_cert_path` and `jwt_public_cert_path` are required for PKJWT authentication. The private key is used for signing the JWT, while the public certificate is used for computing the x5t thumbprint. If the private key is password-protected, provide the password using `jwt_cert_password`.
 
 #### 3. **ODM for Developers (Docker/Local)**
 - **Environment:** Local Docker or Developer Edition
@@ -235,24 +235,33 @@ Depending on your IBM ODM deployment, use the appropriate authentication method:
 | `--zenapikey`     | `ZENAPIKEY`         | Zen API Key for authentication with Cloud Pak for Business Automation                                   |                                         |
 | `--client_id`     | `CLIENT_ID`         | OpenID Connect client ID for authentication                                                             |                                         |
 | `--client_secret` | `CLIENT_SECRET`     | OpenID Connect client secret for authentication                                                         |                                         |
-| `--jwt_cert_path` | `JWT_CERT_PATH`     | Path to the private key certificate for PWJWT authentication (required with jwt_public_cert_path)       |                                         |
-| `--jwt_public_cert_path` | `JWT_PUBLIC_CERT_PATH` | Path to the public certificate for computing x5t in PWJWT authentication (required with jwt_cert_path) |                                         |
-| `--jwt_cert_password` | `JWT_CERT_PASSWORD` | Password to decrypt the private key certificate for PKJWT authentication. Only needed if the certificate is password-protected. |                                         |
+| `--pkjwt_cert_path` | `PKJWT_CERT_PATH` | Path to the certificate for PKJWT authentication (mandatory for PKJWT)                                  |                                         |
+| `--pkjwt_key_path` | `PKJWT_KEY_PATH`   | Path to the private key certificate for PKJWT authentication (mandatory for PKJWT)                      |                                         |
+| `--pkjwt_key_password` | `PKJWT_KEY_PASSWORD` | Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected. |                               |
 | `--token_url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
 | `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
 | `--ssl_cert_path` | `SSL_CERT_PATH`     | Path to the SSL certificate file. If not provided, defaults to system certificates.                     |                                         |
+| `--mtls_cert_path`| `MTLS_CERT_PATH`    | Path to the SSL certificate file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
+| `--mtls_key_path` | `MTLS_KEY_PATH`     | Path to the SSL private key file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
+| `--mtls_key_password` | `MTLS_KEY_PASSWORD` | Password to decrypt the private key of the client for mutual TLS authentication. Only needed if the key is password-protected. |              |
+| `--console_auth_type` | `CONSOLE_AUTH_TYPE` | Explicitly set the authentication type for the RES console (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`)      |                                 |
+| `--runtime_auth_type` | `RUNTIME_AUTH_TYPE` | Explicitly set the authentication type for the Decision Server Runtime (`BASIC`, `ZEN`, `PKJWT`, `SECRET`, `NONE`) |                          |
 | `--log-level`     | `LOG_LEVEL`         | Set the logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`)                                 | `INFO`                                  |
 | `--traces-dir`    | `TRACES_DIR`        | Directory to store execution traces                                                                     | `~/.mcp-server/traces`                  |
 | `--trace-enable`  | `TRACE_ENABLE`      | Enable or disable trace storage (`True` or `False`)                                                     | `False`                                 |
-| `--trace-maxsize` | `TRACE_MAXSIZE`     | Maximum number of traces to store before removing oldest traces                                          | `50`                                    |
+| `--trace-maxsize` | `TRACE_MAXSIZE`     | Maximum number of traces to store before removing oldest traces                                         | `50`                                    |
           
 ### Customizing MCP Server Configuration          
 
-You can configure the MCP server for clients like Claude Desktop or Cursor AI using JSON configuration.  
-**You may use both environment variables and command-line arguments. CLI arguments always take precedence.**
+You can configure the MCP server for clients like Claude Desktop or Cursor AI using a JSON configuration file, which can contain both environment variables and command-line arguments.
 
-#### Recommended: Local Development (Basic Auth)
+**Tips:**
+- Use CLI arguments for quick overrides or non-sensitive parameters.
+- Use environment variables for secrets.
+- You can mix both methods if needed. CLI arguments override environment variables.
+
+The example below shows a typical use-case where the sensitive information (here the password) is passed as an environment variable (so that it does not show in the arguments of the process), and the other parameters are passed as CLI arguments:
 
 ```json
 {
@@ -263,32 +272,11 @@ You can configure the MCP server for clients like Claude Desktop or Cursor AI us
         "--from",
         "git+https://github.com/DecisionsDev/decision-mcp-server",
         "decision-mcp-server",
-        "--url", "http://localhost:9060/res",
-        "--username", "odmAdmin",
-        "--password", "odmAdmin"
-      ]
-    }
-  }
-}
-```
-
-#### Using Environment Variables
-
-Add an `env` object to your MCP server configuration. Each key-value pair sets an environment variable for the MCP server process:
-
-```json
-{
-  "mcpServers": {
-    "decision-mcp-server": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/DecisionsDev/decision-mcp-server",
-        "decision-mcp-server"
+        "--url", "https://odm-res-console-url",
+        "--ssl_cert_path", "certificate-file",
+        "--username", "your-username"
       ],
       "env": {
-        "ODM_URL": "http://localhost:9060/res",
-        "ODM_USERNAME": "odmAdmin",
         "ODM_PASSWORD": "odmAdmin"
       }
     }
@@ -296,55 +284,154 @@ Add an `env` object to your MCP server configuration. Each key-value pair sets a
 }
 ```
 
-#### Using CLI Arguments
+The examples below demonstrates various use cases depending on the type of deployment (dev/test or production), and environments (CloudPak, ...).
 
-Alternatively, pass configuration options directly in the `args` array.  
-Each argument is passed to the MCP server as if running from the command line.
+---
+#### Example 1: Basic Auth for Local Development
 
-```json
-{
-  "mcpServers": {
-    "decision-mcp-server": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/DecisionsDev/decision-mcp-server",
-        "decision-mcp-server",
-        "--url", "https://your-odm-url",
-        "--username", "your-username",
-        "--password", "your-password"
-      ]
-    }
-  }
-}
-```
-
-#### For Cloud Pak (Zen API Key)
+For local development and testing, use the Basic Auth.
 
 ```json
 "args": [
   "--from",
   "git+https://github.com/DecisionsDev/decision-mcp-server",
   "decision-mcp-server",
-  "--zenapikey", "YOUR_ZEN_API_KEY","--username","YOUR_ZENUSERNAME"
-]
-```
-or
-```json
+  "--url", "http://localhost:9060/res",
+  "--username", "odmAdmin"
+],
 "env": {
-  "ZENAPIKEY": "YOUR_ZEN_API_KEY",
-  "USERNAME": "YOUR_ZEN_USERNAME"
+  "ODM_PASSWORD": "odmAdmin"
 }
 ```
 
 ---
+#### Example 2: For Cloud Pak (Zen API Key)
 
-**Tips:**
-- Use CLI arguments for quick overrides or non-sensitive parameters.
-- Use environment variables for secrets.
-- You can mix both methods if needed. CLI arguments override environment variables.
+For production deployments on the Cloud Pak, use the Zen API Key.
 
-> **Recommended:** For local development and testing, use the Basic Auth example above. For production or Cloud Pak deployments, use the Zen API Key or OpenID Connect options as appropriate for your environment.
+```json
+"args": [
+  "--from",
+  "git+https://github.com/DecisionsDev/decision-mcp-server",
+  "decision-mcp-server",
+  "--url",           "https://odm-res-console-url",
+  "--ssl_cert_path", "certificate-file",
+  "--username",      "YOUR_ZENUSERNAME"
+],
+"env": {
+  "ZENAPIKEY": "YOUR_ZEN_API_KEY"
+}
+```
+
+---
+#### Example 3: OpenID Connect
+
+For production deployments on other environments than the Cloud Pak, you may use OpenID Connect if ODM is configured to use it.
+
+The Decision MCP Server can authenticate to ODM configured with OpenID Connect, using the Client Credentials flow.
+
+Two authentication variants are possible:
+
+1) Using a Client Secret
+```json
+"args": [
+  "--from",
+  "git+https://github.com/DecisionsDev/decision-mcp-server",
+  "decision-mcp-server",
+  "--url",           "https://odm-res-console-url",
+  "--runtime-url",   "https://odm-runtime-url",
+  "--ssl_cert_path", "certificate-file",
+  "--token_url",     "https://your-openid-connect_provider-token-endpoint-url",
+  "--scope",         "the_scope_to_be_used_for_client_credentials"
+],
+"env": {
+  "CLIENT_ID":      "YOUR_CLIENT_ID",
+  "CLIENT_SECRET":  "YOUR_CLIENT_SECRET"
+}
+```
+
+2) Using a Private Key (PKJWT)
+```json
+"args": [
+  "--from",
+  "git+https://github.com/DecisionsDev/decision-mcp-server",
+  "decision-mcp-server",
+  "--url",           "https://odm-res-console-url",
+  "--runtime-url",   "https://odm-runtime-url",
+  "--ssl_cert_path", "certificate-file",
+  "--token_url",     "https://your-openid-connect_provider-token-endpoint-url",
+  "--scope",         "the_scope_to_be_used_for_client_credentials"
+],
+"env": {
+  "CLIENT_ID":       "YOUR_CLIENT_ID",
+  "PKJWT_KEY_PATH":  "PKJWT_PRIVATE_KEY_FILENAME",
+  "PKJWT_CERT_PATH": "PKJWT_CERTIFICATE_FILENAME"
+}
+```
+
+---
+#### Example 4: mTLS (Mutual TLS) Authentication
+
+The Decision MCP Server also supports mTLS (mutual TLS) authentication, which secure the SSL connection further.
+
+When authorization is required, mTLS is not self-sufficient. In the example below it is combined with basic auth:
+
+```json
+"args": [
+  "--from",
+  "git+https://github.com/DecisionsDev/decision-mcp-server",
+  "decision-mcp-server",
+  "--url",           "https://odm-res-console-url",
+  "--runtime-url",   "https://odm-runtime-url",
+  "--ssl_cert_path", "certificate-file",
+  "--username",      "SERVICE_ACCOUNT"
+],
+"env": {
+  "PASSWORD":       "SERVICE_ACCOUNT_PASSWORD",
+  "MTLS_KEY_PATH":  "MTLS_PRIVATE_KEY_FILENAME",
+  "MTLS_CERT_PATH": "MTLS_CERTIFICATE_FILENAME"
+}
+```
+
+---
+#### Example 5: Mixed Authentication Types
+
+The Decision MCP Server communicates with two ODM components:
+- the RES console
+- the Decision Server Runtime
+
+These two ODM components can be configured to use two different authentication types. The Decision MCP Server can support this configuration.
+
+The example below shows how to configure the Decision MCP Server when:
+- the RES console uses OpenID Connect with PKJWT, and
+- the Decision Server Runtime has been configured 
+  - for mTLS and 
+  - so that all execution requests are accepted (authorization disabled), in which case the mTLS cert/key are sufficient and no other argument are needed
+
+```json
+"args": [
+  "--from",
+  "git+https://github.com/DecisionsDev/decision-mcp-server",
+  "decision-mcp-server",
+  "--url",           "https://odm-res-console-url",
+  "--runtime-url",   "https://odm-runtime-url",
+  "--ssl_cert_path", "certificate-file",
+
+  "--console_auth_type", "PKJWT",
+  "--token_url",         "https://your-openid-connect_provider-token-endpoint-url",
+  "--scope",             "the_scope_to_be_used_for_client_credentials",
+
+  "--runtime_auth_type", "NONE"
+],
+"env": {
+  "CLIENT_ID":       "YOUR_CLIENT_ID",
+  "PKJWT_KEY_PATH":  "PKJWT_PRIVATE_KEY_FILENAME",
+  "PKJWT_CERT_PATH": "PKJWT_CERTIFICATE_FILENAME",
+
+  "MTLS_KEY_PATH":   "PRIVATE_KEY_FILENAME",
+  "MTLS_CERT_PATH":  "CERTIFICATE_FILENAME"
+}
+```
 
 ---
 
@@ -458,7 +545,7 @@ These annotations provide:
 
 By combining rich service descriptions with properly annotated model classes, you can create tool definitions that LLMs can understand and use with high precision, reducing errors and improving the quality of interactions.
 
-## More informations
+## More information
 
 - For IBM Operational Decision Manager (ODM), see [IBM Documentation](https://www.ibm.com/docs/en/odm).
 - For IBM Watsonx Orchestrate, see [Getting Started](https://www.ibm.com/docs/en/watsonx/watson-orchestrate/base?topic=getting-started-watsonx-orchestrate).

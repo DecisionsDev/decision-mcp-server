@@ -10,9 +10,17 @@ import json
 
 # Test fixtures
 @pytest.fixture
-def mock_credentials():
+def mock_console_credentials():
     return Credentials(
         odm_url="http://test:9060/res",
+        username="test_user",
+        password="test_pass"
+    )
+
+@pytest.fixture
+def mock_runtime_credentials():
+    return Credentials(
+        odm_url="http://test:9060/DecisionService",
         username="test_user",
         password="test_pass"
     )
@@ -22,8 +30,8 @@ def mock_server():
     return Mock(spec=Server)
 
 @pytest.fixture
-def decision_server(mock_credentials, mock_server):
-    server = DecisionMCPServer(credentials=mock_credentials, traces_dir=None)
+def decision_server(mock_console_credentials, mock_runtime_credentials, mock_server):
+    server = DecisionMCPServer(console_credentials=mock_console_credentials, runtime_credentials=mock_runtime_credentials, traces_dir=None)
     server.server = mock_server
     server.manager = Mock()
     return server
@@ -33,13 +41,18 @@ def test_server_initialization(decision_server):
     assert isinstance(decision_server.notes, dict)
     assert isinstance(decision_server.repository, dict)
     assert decision_server.server is not None
-    assert decision_server.credentials is not None
+    assert decision_server.console_credentials is not None
+    assert decision_server.runtime_credentials is not None
 
 # Test argument parsing
 @pytest.mark.parametrize("args,expected", [
     (
         ["--url", "http://test-odm:9060/res"],
         {"url": "http://test-odm:9060/res"}
+    ),
+    (
+        ["--runtime-url", "http://test-odm:9060/DecisionService"],
+        {"runtime_url": "http://test-odm:9060/DecisionService"}
     ),
     (
         ["--username", "testuser", "--password", "testpass"],
@@ -52,6 +65,26 @@ def test_server_initialization(decision_server):
     (
         ["--client_id", "test-client", "--client_secret", "test-secret", "--token_url", "http://op/token", "--scope", "openid"],
         {"client_id": "test-client", "client_secret": "test-secret", "token_url": "http://op/token", "scope": "openid"}
+    ),
+    (
+        ["--pkjwt_cert_path", "/custom/cert/file", "--pkjwt_key_path", "/custom/key/file", "--pkjwt_key_password", "xyz-password"],
+        {"pkjwt_cert_path": "/custom/cert/file", "pkjwt_key_path": "/custom/key/file", "pkjwt_key_password": "xyz-password"}
+    ),
+    (
+        ["--mtls_cert_path", "/custom/cert/file", "--mtls_key_path", "/custom/key/file", "--mtls_key_password", "xyz-password"],
+        {"mtls_cert_path": "/custom/cert/file", "mtls_key_path": "/custom/key/file", "mtls_key_password": "xyz-password"}
+    ),
+    (
+        ["--verifyssl", "False"],
+        {"verifyssl": "False"}
+    ),
+    (
+        ["--ssl_cert_path", "/custom/cert/file"],
+        {"ssl_cert_path": "/custom/cert/file"}
+    ),
+    (
+        ["--console_auth_type", "PKJWT", "--runtime_auth_type", "BASIC"],
+        {"console_auth_type": "PKJWT", "runtime_auth_type": "BASIC"}
     ),
     (
         ["--traces-dir", "/custom/traces/dir"],
@@ -75,7 +108,7 @@ def test_server_initialization(decision_server):
     ),
     (
         [],  # No arguments
-        {"trace_enable": "False", "trace_maxsize": 50, "log_level": "INFO"}  # Default values
+        {"scope": "openid", "verifyssl": "True", "trace_enable": "False", "trace_maxsize": 50, "log_level": "INFO"}  # Default values
     ),
 ])
 def test_parse_arguments(args, expected):  # Added 'expected' parameter
@@ -88,33 +121,68 @@ def test_parse_arguments(args, expected):  # Added 'expected' parameter
 def test_create_credentials_basic_auth():
     args = argparse.Namespace(
         url="http://test:9060/res",
+        odm_url="http://test:9060/res",
         runtime_url=None,
         username="test_user",
         password="test_pass",
         zenapikey=None,
         client_id=None,
         client_secret=None,
+        token_url=None,
+        scope="openid",
         verifyssl="True",
-        ssl_cert_path=None
+        ssl_cert_path=None,
+        pkjwt_cert_path=None,
+        pkjwt_key_path=None,
+        pkjwt_key_password=None,
+        mtls_cert_path=None,
+        mtls_key_path=None,
+        mtls_key_password=None,
+        console_auth_type=None,
+        runtime_auth_type=None,
+        traces_dir=None,
+        trace_enable="False",
+        trace_maxsize=50,
+        log_level="INFO"
     )
-    credentials = create_credentials(args)
-    assert credentials.odm_url == "http://test:9060/res"
-    assert credentials.username == "test_user"
-    assert credentials.password == "test_pass"
+    console_credentials, runtime_credentials = create_credentials(args)
+    assert console_credentials.odm_url == "http://test:9060/res"
+    assert console_credentials.username == "test_user"
+    assert console_credentials.password == "test_pass"
+
+    assert runtime_credentials.odm_url == "http://test:9060/DecisionService"
+    assert runtime_credentials.username == "test_user"
+    assert runtime_credentials.password == "test_pass"
 
 def test_create_credentials_zen_api():
     args = argparse.Namespace(
         url="http://test:9060/res",
         runtime_url="http://test:9060/DecisionService",
         username="test_user",
+        password=None,
         zenapikey="test-key",
         client_id=None,
         client_secret=None,
+        token_url=None,
+        scope="openid",
         verifyssl="True",
-        ssl_cert_path=None
+        ssl_cert_path=None,
+        pkjwt_cert_path=None,
+        pkjwt_key_path=None,
+        pkjwt_key_password=None,
+        mtls_cert_path=None,
+        mtls_key_path=None,
+        mtls_key_password=None,
+        console_auth_type=None,
+        runtime_auth_type=None,
+        traces_dir=None,
+        trace_enable="False",
+        trace_maxsize=50,
+        log_level="INFO"
     )
-    credentials = create_credentials(args)
-    assert credentials.zenapikey == "test-key"
+    console_credentials, runtime_credentials = create_credentials(args)
+    assert console_credentials.zenapikey == "test-key"
+    assert runtime_credentials.zenapikey == "test-key"
 
 def test_create_credentials_openid():
     args = argparse.Namespace(
@@ -128,25 +196,58 @@ def test_create_credentials_openid():
         token_url="http://op/token",
         scope="openid",
         verifyssl="True",
-        ssl_cert_path=None
+        ssl_cert_path=None,
+        pkjwt_cert_path=None,
+        pkjwt_key_path=None,
+        pkjwt_key_password=None,
+        mtls_cert_path=None,
+        mtls_key_path=None,
+        mtls_key_password=None,
+        console_auth_type=None,
+        runtime_auth_type=None,
+        traces_dir=None,
+        trace_enable="False",
+        trace_maxsize=50,
+        log_level="INFO"
     )
-    credentials = create_credentials(args)
-    assert credentials.client_id == "test-client"
-    assert credentials.client_secret == "test-secret"
-    assert credentials.token_url == "http://op/token"
-    assert credentials.scope == "openid"
+    console_credentials, runtime_credentials = create_credentials(args)
+    assert console_credentials.client_id == "test-client"
+    assert console_credentials.client_secret == "test-secret"
+    assert console_credentials.token_url == "http://op/token"
+    assert console_credentials.scope == "openid"
+
+    assert runtime_credentials.client_id == "test-client"
+    assert runtime_credentials.client_secret == "test-secret"
+    assert runtime_credentials.token_url == "http://op/token"
+    assert runtime_credentials.scope == "openid"
 
 # Test error cases
 def test_create_credentials_missing_basic_auth():
     args = argparse.Namespace(
         url="http://test:9060/res",
+        odm_url="http://test:9060/res",
         runtime_url=None,
-        username=None,
+        username="username",
         password=None,
         zenapikey=None,
         client_id=None,
         client_secret=None,
-        verifyssl="True"
+        token_url=None,
+        scope="openid",
+        verifyssl="True",
+        ssl_cert_path=None,
+        pkjwt_cert_path=None,
+        pkjwt_key_path=None,
+        pkjwt_key_password=None,
+        mtls_cert_path=None,
+        mtls_key_path=None,
+        mtls_key_password=None,
+        console_auth_type=None,
+        runtime_auth_type=None,
+        traces_dir=None,
+        trace_enable="False",
+        trace_maxsize=50,
+        log_level="INFO"
     )
     with pytest.raises(ValueError) as exc_info:
         create_credentials(args)
@@ -160,17 +261,33 @@ def test_create_credentials_missing_basic_auth():
 def test_ssl_verification(verify_ssl, expected):
     args = argparse.Namespace(
         url="http://test:9060/res",
+        odm_url="http://test:9060/res",
         runtime_url=None,
         username="test_user",
         password="test_pass",
-        zenapikey=None,        # Added missing required args
-        client_id=None,        # Added missing required args
-        client_secret=None,    # Added missing required args
+        zenapikey=None,
+        client_id=None,
+        client_secret=None,
+        token_url=None,
+        scope="openid",
         verifyssl=verify_ssl,
-        ssl_cert_path=None
+        ssl_cert_path=None,
+        pkjwt_cert_path=None,
+        pkjwt_key_path=None,
+        pkjwt_key_password=None,
+        mtls_cert_path=None,
+        mtls_key_path=None,
+        mtls_key_password=None,
+        console_auth_type=None,
+        runtime_auth_type=None,
+        traces_dir=None,
+        trace_enable="False",
+        trace_maxsize=50,
+        log_level="INFO"
     )
-    credentials = create_credentials(args)
-    assert credentials.verify_ssl == expected
+    console_credentials, runtime_credentials = create_credentials(args)
+    assert console_credentials.verify_ssl == expected
+    assert runtime_credentials.verify_ssl == expected
 
 # Test environment variables
 def test_environment_variables():
@@ -241,7 +358,7 @@ def server(mock_manager):
         username="test",
         password="test"
     )
-    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=50)  # Explicitly enable traces for testing
+    server = DecisionMCPServer(console_credentials=credentials, runtime_credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=50)  # Explicitly enable traces for testing
     server.manager = mock_manager
     return server
 
@@ -365,7 +482,7 @@ def server_with_traces_enabled():
         password="test"
     )
     # Explicitly enable traces for testing
-    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=10)
+    server = DecisionMCPServer(console_credentials=credentials, runtime_credentials=credentials, traces_dir=None, trace_enable=True, trace_maxsize=10)
     server.manager = Mock()
     return server
 
@@ -377,7 +494,7 @@ def server_with_traces_disabled():
         password="test"
     )
     # Default behavior is traces disabled, but we're explicit here for clarity in tests
-    server = DecisionMCPServer(credentials=credentials, traces_dir=None, trace_enable=False, trace_maxsize=10)
+    server = DecisionMCPServer(console_credentials=credentials, runtime_credentials=credentials, traces_dir=None, trace_enable=False, trace_maxsize=10)
     server.manager = Mock()
     return server
 

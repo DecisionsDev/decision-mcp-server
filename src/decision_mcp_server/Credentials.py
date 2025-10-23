@@ -52,14 +52,24 @@ class Credentials:
         The OpenID Client Id to connect to the ODM product for OpenID authentication.
     client_secret : str, optional
         The OpenID Client Secret to connect to the ODM product for OpenID authentication.
+    pkjwt_cert_path : str, optional
+        Path to the client certificate file for PKJWT authentication.
+    pkjwt_key_path : str, optional
+        Path to the client private key file for PKJWT authentication.
+    pkjwt_key_password : str, optional
+        Password to decrypt the private key for PKJWT authentication. Only needed if the private key is password-protected.
     zenapikey : str, optional
         The ZenAPI key for API key-based authentication.
     verify_ssl : bool, optional
         Whether to verify SSL certificates. Defaults to True.
     ssl_cert_path : str, optional
         Path to the SSL certificate file. If not provided, defaults to system certificates.
-    jwt_cert_password : str, optional
-        Password to decrypt the private key certificate for PKJWT authentication. Only needed if the certificate is password-protected.
+    mtls_cert_path : str, optional
+        certificate for mTLS
+    mtls_key_path : str, optional
+        private key for mTLS
+    mtls_key_password : str, optional
+        password to decrypt the private key for mTLS. Only needed when the private key is password-protected.
     debug : bool, optional
         Whether to enable HTTP debug logging. Defaults to False.
 
@@ -70,20 +80,18 @@ class Credentials:
     get_session():
         Creates and returns a requests Session object configured with SSL settings.
     """
-    def __init__(self, odm_url, odm_url_runtime=None, token_url=None, scope='openid', client_id=None, client_secret=None, jwt_cert_path=None, jwt_public_cert_path=None, jwt_cert_password=None, username=None, password=None, zenapikey=None, verify_ssl=True, ssl_cert_path=None, debug=False):
+    def __init__(self, odm_url, 
+                 token_url=None, scope='openid', client_id=None, client_secret=None, 
+                 pkjwt_cert_path=None, pkjwt_key_path=None, pkjwt_key_password=None, 
+                 username=None, password=None, 
+                 zenapikey=None, 
+                 verify_ssl=True, ssl_cert_path=None, 
+                 mtls_cert_path=None, mtls_key_path=None, mtls_key_password=None, 
+                 debug=False):
 
         # Get logger for this class with explicit name to ensure consistency
         self.logger = logging.getLogger("decision_mcp_server.Credentials")
         self.odm_url=odm_url.rstrip('/')
-        if odm_url_runtime is not None:
-           self.logger.info("Using provided runtime URL: " + odm_url_runtime)
-           self.odm_url_runtime=odm_url_runtime.rstrip('/')  
-        else:
-            self.odm_url_runtime=self.odm_url
-                # Check if the URL ends with 'res' and replace it with 'DecisionService'
-            if self.odm_url_runtime.endswith('res'):
-                self.odm_url_runtime=self.odm_url_runtime[:-3] + 'DecisionService'
-            self.logger.info("No runtime URL provided, using odm_url as root runtime URL."+self.odm_url_runtime)
         if not checkers.is_url(self.odm_url):
             raise ValueError("'"+self.odm_url+"' is not a valid URL")
 
@@ -99,13 +107,40 @@ class Credentials:
         self.scope = scope
         self.client_id = client_id
         self.client_secret = client_secret
-        self.jwt_cert_path = jwt_cert_path
-        self.jwt_public_cert_path = jwt_public_cert_path
-        self.jwt_cert_password = jwt_cert_password
         self.zenapikey = zenapikey
         self.verify_ssl = verify_ssl
         self.ssl_cert_path = ssl_cert_path
         self.debug = debug
+
+        self.pkjwt_cert_path = None
+        self.pkjwt_key_path  = None
+        self.pkjwt_key_password = None
+        self.pkjwt_key_data  = None
+
+        self.mtls_cert_path = None
+        self.mtls_key_path  = None
+        self.mtls_key_password = None
+        self.mtls_key_data  = None
+
+        if pkjwt_key_path or pkjwt_cert_path:
+            # Ensure both private and public certificates are provided
+            if ((    pkjwt_key_path and not pkjwt_cert_path) or
+                (not pkjwt_key_path and     pkjwt_cert_path)):
+                raise ValueError("Both 'pkjwt_key_path' and 'pkjwt_cert_path' are required for PKJWT authentication.")
+            self.pkjwt_cert_path = pkjwt_cert_path
+            self.pkjwt_key_path  = pkjwt_key_path
+            self.pkjwt_key_password = pkjwt_key_password
+            self.pkjwt_key_data  = self.get_unencrypted_key_data(pkjwt_key_path, pkjwt_key_password)
+
+        if mtls_key_path or mtls_cert_path:
+            # Ensure both private and public certificates are provided
+            if ((    mtls_key_path and not mtls_cert_path) or
+                (not mtls_key_path and     mtls_cert_path)):
+                raise ValueError("Both 'mtls_key_path' and 'mtls_cert_path' are required for mTLS authentication.")
+            self.mtls_cert_path    = mtls_cert_path
+            self.mtls_key_path     = mtls_key_path
+            self.mtls_key_password = mtls_key_password
+            self.mtls_key_data     = self.get_unencrypted_key_data(mtls_key_path, mtls_key_password)
 
     def get_auth(self):
         if self.zenapikey:
@@ -120,21 +155,18 @@ class Credentials:
                 'Content-Type': 'application/json; charset=UTF-8', 
                 'accept': 'application/json; charset=UTF-8'
             }
-        elif self.client_id:
+        elif self.client_id or self.client_secret:
             if not self.client_id or not self.token_url:
                 raise ValueError("Both 'client_id' and 'token_url' are required for OpenId authentication.")
             
-            # Check if we're using PWJWT (certificate-based) or client_secret
-            if self.jwt_cert_path:
+            # Check if we're using PKJWT (certificate-based) or client_secret
+            if self.pkjwt_cert_path:
                 from cryptography import x509
                 from cryptography.hazmat.backends import default_backend
                 from cryptography.hazmat.primitives import serialization
-                # Ensure both private and public certificates are provided
-                if not self.jwt_public_cert_path:
-                    raise ValueError("Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication.")
                 
-                # PWJWT authentication using certificate
-                # Note: PyJWT package is required for PWJWT authentication
+                # PKJWT (Private Key Json Web Token) authentication
+                # Note: PyJWT package is required for PKJWT authentication
                 # If you get an error, install it with: pip install PyJWT
                 try:
                     # Try to import PyJWT dynamically
@@ -142,43 +174,7 @@ class Credentials:
                     # type: ignore
                     import jwt  # type: ignore # noqa
                 except ImportError:
-                    raise ImportError("PyJWT package is required for PWJWT authentication. Install with 'pip install PyJWT'.")
-                
-                # Read the private key from the certificate file
-                try:
-                    with open(self.jwt_cert_path, 'r') as cert_file:
-                        private_key_data = cert_file.read()
-                    
-                    # If a password is provided, decrypt the private key
-                    if self.jwt_cert_password:
-                        from cryptography.hazmat.primitives.serialization import load_pem_private_key
-                        from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
-                        
-                        try:
-                            # Load the encrypted private key
-                            key_obj = load_pem_private_key(
-                                private_key_data.encode(),
-                                password=self.jwt_cert_password.encode(),
-                                backend=default_backend()
-                            )
-                            
-                            # Convert back to PEM format (unencrypted for use with PyJWT)
-                            private_key = key_obj.private_bytes(
-                                encoding=Encoding.PEM,
-                                format=PrivateFormat.PKCS8,
-                                encryption_algorithm=NoEncryption()
-                            ).decode('utf-8')
-                            
-                            self.logger.info("Successfully decrypted password-protected certificate")
-                        except Exception as e:
-                            raise ValueError(f"Failed to decrypt certificate with provided password: {str(e)}")
-                    else:
-                        # Use the key as-is if no password
-                        private_key = private_key_data
-                except FileNotFoundError:
-                    raise ValueError(f"Certificate file not found at path: {self.jwt_cert_path}")
-                except IOError as e:
-                    raise ValueError(f"Error reading certificate file: {str(e)}")
+                    raise ImportError("PyJWT package is required for PKJWT authentication. Install with 'pip install PyJWT'.")
                 
                 # Create JWT token with required claims
                 now = int(time.time())
@@ -196,7 +192,7 @@ class Credentials:
                 try:
                     # Calculate the certificate thumbprint from the public certificate
                     try:
-                        with open(self.jwt_public_cert_path, 'rb') as cert_file:
+                        with open(self.pkjwt_cert_path, 'rb') as cert_file:
                             cert_data = cert_file.read()
                         
                         # Load the certificate
@@ -224,7 +220,7 @@ class Credentials:
                         raise ValueError(f"Error calculating certificate thumbprint from public certificate: {str(e)}")
                     
                     # Sign the JWT with the private key and include headers
-                    encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256', headers=headers)
+                    encoded_jwt = jwt.encode(payload, self.pkjwt_key_data, algorithm='RS256', headers=headers)
                     self.logger.info("JWT token created successfully.");   
                     self.logger.debug("msg encoded JWT "+encoded_jwt)                # Prepare the token request with the JWT assertion
                     data = {
@@ -244,10 +240,10 @@ class Credentials:
             else:
                 # Standard OpenID client_secret authentication
                 if not self.client_secret:
-                    if self.jwt_public_cert_path:
-                        raise ValueError("Both 'jwt_cert_path' and 'jwt_public_cert_path' are required for PWJWT authentication.")
+                    if self.pkjwt_cert_path:
+                        raise ValueError("Both 'pkjwt_key_path' and 'pkjwt_cert_path' are required for PKJWT authentication.")
                     else:
-                        raise ValueError("Either 'client_secret' or 'jwt_cert_path' is required for OpenId authentication.")
+                        raise ValueError("Either 'client_secret' or 'pkjwt_key_path' is required for OpenId authentication.")
                 
                 data = {
                     'grant_type': 'client_credentials',
@@ -275,7 +271,10 @@ class Credentials:
                 'accept': 'application/json; charset=UTF-8'
             }
         else:
-            raise ValueError("Either username and password, bearer token, or zenapikey must be provided.")
+            return { 
+                'Content-Type': 'application/json; charset=UTF-8',
+                'accept': 'application/json; charset=UTF-8'
+            }
 
     def get_session(self):
         """
@@ -290,8 +289,72 @@ class Credentials:
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             session.verify = False
-        
+
         headers = self.get_auth()
         session.headers.update(headers)
-        self.logger.debug(f"Session created with URL: {self.odm_url}, Runtime URL: {self.odm_url_runtime} with headers: {session.headers}")        
+        if self.mtls_cert_path:
+            session.cert = self.mtls_cert_tuple()
+        self.logger.debug(f"Session created with URL: {self.odm_url} and headers: {session.headers}")        
         return session
+    
+    def mtls_cert_tuple(self):
+        if not self.mtls_key_password:
+            return (self.mtls_cert_path,
+                    self.mtls_key_path)
+        else:
+            try:
+                # write the unencrypted private key into a temporary file
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False, delete_on_close=False) as fp:
+                    fp.write(self.mtls_key_data.encode())
+                    fp.close()
+                    self.mtls_unencrypted_key_path = fp.name
+            except IOError as e:
+                raise ValueError(f"Error writing unencrypted key file for mTLS: {str(e)}")
+            return (self.mtls_cert_path,
+                    self.mtls_unencrypted_key_path)
+
+    def cleanup(self):
+        if self.mtls_key_password:
+            import os
+            os.remove(self.mtls_unencrypted_key_path)
+
+    # return content of a private key in PEM format, and not password protected
+    def get_unencrypted_key_data(self, key_path, key_password=None):
+        try:
+            # Read the private key
+            with open(key_path, 'r') as key_file:
+                key_data = key_file.read()
+            
+            if key_password is None:
+                # Use the key as-is if no password
+                unencrypted_key_data = key_data
+            else:
+                # If a password is provided, decrypt the private key
+                from cryptography.hazmat.primitives.serialization import load_pem_private_key
+                from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
+                from cryptography.hazmat.backends import default_backend
+
+                try:
+                    # Load the encrypted private key
+                    key_obj = load_pem_private_key(
+                        key_data.encode(),
+                        password=key_password.encode(),
+                        backend=default_backend()
+                    )
+                    
+                    # Convert back to PEM format (unencrypted for use with PyJWT)
+                    unencrypted_key_data = key_obj.private_bytes(
+                        encoding=Encoding.PEM,
+                        format=PrivateFormat.PKCS8,
+                        encryption_algorithm=NoEncryption()
+                    ).decode('utf-8')
+                    
+                    self.logger.info("Successfully decrypted password-protected private key")
+                except Exception as e:
+                    raise ValueError(f"Failed to decrypt private key with provided password: {str(e)}")
+        except FileNotFoundError:
+            raise ValueError(f"Private key file not found at path: {key_path}")
+        except IOError as e:
+            raise ValueError(f"Error reading private key file {key_path}: {str(e)}")
+        return unencrypted_key_data
