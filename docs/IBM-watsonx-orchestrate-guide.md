@@ -63,7 +63,7 @@ You need a running instance of both:
    >    followed by :
    >    - `--url <RES_URL>` (where RES_URL is the URL of the ODM RES console where the rulesets to be used as tools are deployed)
    >    - authentication arguments to connect to the ODM RES console (either using basic auth, OpenId, or Zen Api Key)
-   >  - For more about those arguments, please refer to [the main README.md (chapter 'ODM Container Environments & Authentication')](../README.md#odm-container-environments--authentication)
+   >  - For more about those arguments, please refer to [the main README.md (chapter 'ODM Container Environments & Authentication')](../README.md#1-odm-container-environments--authentication)
 
    > Note 2:
    >  - Before clicking **Connect**, make sure that the rulesets that should be exposed as tools through the Decision MCP Server, are deployed and configured accordingly using the ruleset parameter `agent.enabled` = `True`, otherwise you need to delete the MCP server and recreate it
