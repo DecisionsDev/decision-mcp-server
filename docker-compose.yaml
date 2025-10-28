@@ -1,6 +1,6 @@
 services:
   odm:
-    image: ibmcom/odm:9.5
+    image: icr.io/cpopen/odm-k8s/odm:9.5
     hostname: odm
     container_name: odm
     environment:
