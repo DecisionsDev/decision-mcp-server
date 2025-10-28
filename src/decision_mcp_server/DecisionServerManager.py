@@ -50,27 +50,27 @@ class DecisionServerManager:
         print(response)
     """
     
-    def __init__(self, credentials):
+    def __init__(self, console_credentials, runtime_credentials):
         """
         :no-index:
         Initializes the DecisionServerManager with the provided credentials.
 
         Args:
-            credentials (object): An object containing authentication details.
+            console_credentials (object): An object containing authentication details for the RES console.
+            runtime_credentials (object): An object containing authentication details for the DecisionServer runtime.
 
         Attributes:
             logger (logging.Logger): Logger instance for logging information.
-            credentials (object): The provided credentials object.
-            auth (str): Authentication token obtained from credentials.
-            headers (dict): Headers obtained from credentials.
+            console_credentials (object): The provided RES console credentials object.
+            runtime_credentials (object): The provided DecisionServer runtime credentials object.
             trace (dict): Trace configuration for logging rule firing information.
         """
         # Get logger for this class
         self.logger = logging.getLogger(__name__)
 
         # Initialize with provided credentials
-        self.credentials = credentials
-        self.headers = self.credentials.get_auth()
+        self.console_credentials = console_credentials
+        self.runtime_credentials = runtime_credentials
         self.trace={ 
             "__TraceFilter__": {
                 "none": True,
@@ -159,10 +159,10 @@ class DecisionServerManager:
         """
         try:
                 # Make the GET request with headers
-                self.logger.info("Retrieve OpenAPI schema at "+self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi')
-                session = self.credentials.get_session()
-                response = session.get(self.credentials.odm_url_runtime+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=self.headers, verify=self.credentials.cacert)
-
+                self.logger.info("Retrieve OpenAPI schema at "+self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi')
+                session = self.runtime_credentials.get_session()
+                response = session.get(self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=session.headers, verify=self.runtime_credentials.cacert)
+                self.runtime_credentials.cleanup()
 
                 # Check if the request was successful
                 if response.status_code == 200:
@@ -244,9 +244,10 @@ class DecisionServerManager:
         """
         try:
             # Make the GET request with headers
-            self.logger.info(self.credentials.odm_url+'/api/v1/ruleapps')
-            session = self.credentials.get_session()
-            response = session.get(self.credentials.odm_url+'/api/v1/ruleapps', headers=self.headers, verify=self.credentials.cacert)
+            self.logger.info(self.console_credentials.odm_url+'/api/v1/ruleapps')
+            session = self.console_credentials.get_session()
+            response = session.get(self.console_credentials.odm_url+'/api/v1/ruleapps', headers=session.headers, verify=self.console_credentials.cacert)
+            self.console_credentials.cleanup()
 
             # Check if the request was successful
             if response.status_code == 200:
@@ -286,9 +287,10 @@ class DecisionServerManager:
         if trace:
             params.update(self.trace)  # Add trace information to params
 
-        session = self.credentials.get_session()
-        response = session.post(self.credentials.odm_url_runtime+'/rest'+rulesetPath, headers=headers,
+        session = self.runtime_credentials.get_session()
+        response = session.post(self.runtime_credentials.odm_url+'/rest'+rulesetPath, headers=session.headers,
                                 json=params)
+        self.runtime_credentials.cleanup()
 
         # check response
         if response.status_code == 200:
