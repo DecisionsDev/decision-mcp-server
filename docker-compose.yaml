@@ -15,7 +15,7 @@ services:
     ports:
       - 9060:9060
   triggerDeployment:
-    image: ibmcom/odm:9.5
+    image: icr.io/cpopen/odm-k8s/odm:9.5
     container_name: upload_materials
     depends_on:
       odm:
