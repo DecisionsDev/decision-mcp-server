@@ -155,11 +155,11 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
            "decision-mcp-server",
            "--url",
            "http://localhost:9060/res",
-           "--username",
-           "odmAdmin",
-           "--password",
-           "odmAdmin"
-         ]
+           "--username", "odmAdmin",
+         ],
+         "env": {
+          "PASSWORD":"odmAdmin"
+         },
        }
      }
    }
