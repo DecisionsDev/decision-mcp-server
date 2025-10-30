@@ -1,0 +1,4 @@
+# Explicit file types
+*.sh text eol=lf
+*.yaml text eol=lf
+
