@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.13
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
   - on macOS: `brew install uv`
   - on Windows: see link above
@@ -14,19 +14,35 @@
 - Docker and Docker Compose (optional, for Step 2: local ODM deployment)
   > Note: This installation has been tested with Docker Rancher Desktop
 
-### Step 1: Install `uv` and Python
+### Step 1: Install Git, Python and uv
 
-Verify your Python and `uv` installation:
+- Install Git (you can keep the default options)
+- Install Python 3.13 or later
+- Install uv:
+  - on macOS: 
+    ```shell
+    brew install uv
+    ```
+  - on Windows: 
+    - in Powershell, run the command described in [installing uv](https://docs.astral.sh/uv/getting-started/installation/)
+    - once `uv` is installed, open a new Powershell window/tab, and run the command below:
+      ```powershell
+      uvx --from git+https://github.com/DecisionsDev/decision-mcp-server decision-mcp-server
+      ``` 
+    - wait for `uvx` to complete downloading all the Python packages required by Decision MCP server
+    - you can then safely stop the `uvx` command line
 
-**For macOS/Linux (in Terminal):**
-```bash
-uv python list
-```
+- Verify your Python and `uv` installation:
 
-**For Windows (in PowerShell):**
-```powershell
-uv python list
-```
+    **For macOS/Linux (in Terminal):**
+    ```bash
+    uv python list
+    ```
+
+    **For Windows (in PowerShell):**
+    ```powershell
+    uv python list
+    ```
 
 ### Step 2: Install Docker Rancher Desktop (Optional)
 
