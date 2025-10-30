@@ -56,18 +56,26 @@ If you don't have Docker installed yet, we recommend using Rancher Desktop which
      wsl --install
      ```
    - Restart your computer when prompted
+   - Open PowerShell as Administrator and run:
+     ```powershell
+     wsl --install
+     ```
    - After restart, a Linux distribution (usually Ubuntu) will be installed automatically
-   - Set up your Linux username and password when prompted
+   - Set up your Linux username and password when prompted (ex: admin/admin)
+     
 
 2. **Install Rancher Desktop**:
    - Download the installer from [Rancher Desktop website](https://rancherdesktop.io/)
    - Run the installer and follow the on-screen instructions
-   - During setup, ensure WSL integration is enabled
-   - Select "dockerd" as the container runtime (not "containerd")
+   - Run Rancher Desktop
+     - Disable Enable Kubernetes (Not needed for this demonstration)
+     - Wait until the initialization was finished.
+     - Ensure WSL integration is enabled
+     - Select "dockerd" as the container runtime (not "containerd")
    - After installation, Rancher Desktop will start automatically
 
 3. **Verify Installation**:
-   - Open PowerShell
+   - Open a new PowerShell windows
    - Run the following commands:
      ```powershell
      docker --version
@@ -97,6 +105,9 @@ If you don't have Docker installed yet, we recommend using Rancher Desktop which
 If you want to use a local ODM instance for development or testing, 
 
 - clone this repository,
+```bash
+  git clone https://github.com/DecisionsDev/decision-mcp-server.git
+ ```
 - and run:
 
     **For macOS/Linux (in Terminal):**
