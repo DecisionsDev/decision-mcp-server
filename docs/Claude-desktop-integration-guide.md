@@ -107,6 +107,7 @@ If you want to use a local ODM instance for development or testing,
 - clone this repository,
 ```bash
   git clone https://github.com/DecisionsDev/decision-mcp-server.git
+  cd decision-mcp-server
  ```
 - and run:
 
