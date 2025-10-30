@@ -16,7 +16,7 @@
 
 ### Step 1: Install Git, Python and uv
 
-- Install Git (you can keep the default options)
+- [Install Git](https://git-scm.com/install/windows) (you can keep the default options)
 - Install Python 3.13 or later
 - Install uv:
   - on macOS: 
