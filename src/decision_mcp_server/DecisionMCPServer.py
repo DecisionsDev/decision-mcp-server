@@ -301,7 +301,7 @@ def create_credentials(args):
     if args.runtime_url is not None:
         odm_url_runtime=args.runtime_url
     else:
-        odm_url_runtime=args.odm_url.rstrip('/')
+        odm_url_runtime=args.url.rstrip('/')
         # replace 'res' with 'DecisionService'
         if odm_url_runtime.endswith('res'):
             odm_url_runtime=odm_url_runtime[:-3] + 'DecisionService'
