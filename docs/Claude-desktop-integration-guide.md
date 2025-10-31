@@ -171,7 +171,7 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
     - on macOS: Claude > Quit
     - on Windows: File > Exit
 
-Refer to the [Parameters Table](../README.md#parameters-table) for a list of supported environment variables and CLI arguments.
+Refer to the [Configuration Parameters Table](../README.md#configuration-parameters-table) for a list of supported environment variables and CLI arguments.
 
 ## Part 2: Demo Walkthrough
 
