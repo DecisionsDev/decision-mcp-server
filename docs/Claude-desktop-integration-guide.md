@@ -158,7 +158,7 @@ This ODM instance will be available for the MCP Server, pre-populated with sampl
            "--username", "odmAdmin",
          ],
          "env": {
-          "PASSWORD":"odmAdmin"
+          "PASSWORD": "odmAdmin"
          },
        }
      }
