@@ -4,15 +4,8 @@
 
 ### Prerequisites
 
-- Python 3.13
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
-  - on macOS: `brew install uv`
-  - on Windows: see link above
-- Git
-  > Note: on Windows, install Git in a path without space character.
 - Claude Desktop ([Download](https://claude.ai/download))
-- Docker and Docker Compose (optional, for Step 2: local ODM deployment)
-  > Note: This installation has been tested with Docker Rancher Desktop
+
 
 ### Step 1: Install Git, Python and uv
 
