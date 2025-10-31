@@ -37,6 +37,50 @@ IBM watsonx Orchestrate can be augmented with decisions implemented in IBM Opera
 
 For detailed instructions, see the [IBM watsonx Orchestrate Integration Guide](/docs/IBM-watsonx-orchestrate-guide.md).
 
+
+---
+
+## Prerequisites & Installation
+
+### Prerequisites
+
+- **Python 3.13 or higher** - This MCP server is written in Python and requires Python 3.13+
+- **uv** - A fast Python package installer and resolver (recommended)
+
+### Installing uv
+
+The easiest way to run the Decision MCP Server is using `uv`, which handles package installation and execution:
+
+**macOS and Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Alternative (via pip):**
+```bash
+pip install uv
+```
+
+For more installation options, see the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/).
+
+### Running the Server
+
+Once `uv` is installed, you can run the Decision MCP Server directly without manual installation:
+
+```bash
+uvx --from git+https://github.com/DecisionsDev/decision-mcp-server decision-mcp-server --url http://localhost:9060/res
+```
+
+The `uvx` command automatically:
+- Downloads and installs the package
+- Manages dependencies
+- Runs the server
+
 ---
 ## Configuration
 
