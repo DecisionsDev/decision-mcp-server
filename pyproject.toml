@@ -4,7 +4,7 @@ version = "0.9.0"
 description = "An MCP Server enabling integration with IBM Decision Server Runtime to retrieve and invoke decision services."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [ "mcp>=1.12.2","requests","pyyaml","jsonref","validator_collection","PyJWT","cryptography"]
+dependencies = [ "mcp==1.12.2","requests","pyyaml","jsonref","validator_collection","PyJWT","cryptography"]
 [[project.authors]]
 name = "laurent grateau"
 email = "laurent.grateau@fr.ibm.com"
@@ -20,7 +20,7 @@ dev = [
     "pytest-cov>=6.2.1",
     "pytest-html>=4.1.1",
     "responses>=0.25.8",
-    "urllib3>=2.6.3",
+    "urllib3==2.5.0",
     "validator-collection>=1.5.0",
 ]
 
