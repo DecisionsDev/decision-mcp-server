@@ -245,7 +245,6 @@ Some scanners may report false positives. Review each finding carefully and:
 - [Trivy documentation](https://aquasecurity.github.io/trivy/)
 - [NIST National Vulnerability Database](https://nvd.nist.gov/)
 - [GitHub Security Advisories](https://github.com/advisories)
-- [CVE Scanning Guide](../../docs/CVE-SCANNING.md) - Detailed documentation
 
 ## Support
 
