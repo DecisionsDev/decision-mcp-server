@@ -123,8 +123,15 @@ class DecisionServerManager:
            ]
             if not filtered_rulesets:
                 continue
-            sorted_rulesets = sorted(filtered_rulesets, key=lambda x: (x[0], x[1]["version"]), reverse=True)
-                # Get the highest version ruleset
+            
+            # Use numeric version comparison instead of lexicographic string comparison
+            sorted_rulesets = sorted(
+                filtered_rulesets,
+                key=lambda x: (tuple(map(int, x[0].split('.'))), tuple(map(int, x[1]["version"].split('.')))),
+                reverse=True
+            )
+
+            # Get the highest version ruleset
             highest_version_ruleset = sorted_rulesets[0][1]
             highest_version_rulesets[str(ruleapp_name)+str(ruleset_name)] = highest_version_ruleset
 
