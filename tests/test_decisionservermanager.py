@@ -22,36 +22,36 @@ import threading
 # Mock data to be returned by the server
 mock_data = [
     {
-        "id": "checktoolsparam/v1",
+        "id": "checktoolsparam/1.0",
         "rulesets": [
             # This ruleset has a agent.parameters property
-            {"id": "checktoolsparam/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
-            {"id": "checktoolsparam/v1/ruleset2", "properties": [{"id":"ruleset.status","value":"enabled"}],"version": "2.0","test":"false"}
+            {"id": "checktoolsparam/1.0/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
+            {"id": "checktoolsparam/1.0/ruleset2", "properties": [{"id":"ruleset.status","value":"enabled"}],"version": "2.0","test":"false"}
         ]
     },
     {
-        "id": "verifystatusenabled/v1",
+        "id": "verifystatusenabled/1.0",
         "rulesets": [
             # This ruleset has an enabled status
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
+            {"id": "verifystatusenabled/1.0/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.0","test":"true"},
             # This ruleset has an enabled status - Should be selected
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "2.0","test":"true"},
+            {"id": "verifystatusenabled/1.0/ruleset1", "properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "2.0","test":"true"},
             # This ruleset has a disabled status
-            {"id": "verifystatusenabled/v1/ruleset1", "properties": [{"id":"ruleset.status","value":"disabled"},{"id":"agent.enabled","value":"true"}],"version": "3.0","test":"false"}
+            {"id": "verifystatusenabled/1.0/ruleset1", "properties": [{"id":"ruleset.status","value":"disabled"},{"id":"agent.enabled","value":"true"}],"version": "3.0","test":"false"}
         ]
     },
     {
-        "id": "multipleruleset/v1",
+        "id": "multipleruleset/1.0",
         "rulesets": [
-            {"id": "multipleruleset/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.1","test":"true"},
-            {"id": "multipleruleset/v1/ruleset2","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.2","test":"true"}
+            {"id": "multipleruleset/1.0/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.1","test":"true"},
+            {"id": "multipleruleset/1.0/ruleset2","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}], "version": "1.2","test":"true"}
         ]
     },
     {
-        "id": "minorrulesetversion/v1",
+        "id": "minorrulesetversion/1.0",
         "rulesets": [
-            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.parameters","value":"{\"arg\":\"name\"}"}], "version": "1.1","test":"true"},
-            {"id": "minorrulesetversion/v1/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}],"version": "1.2","test":"true"}
+            {"id": "minorrulesetversion/1.0/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.parameters","value":"{\"arg\":\"name\"}"}], "version": "1.1","test":"true"},
+            {"id": "minorrulesetversion/1.0/ruleset1","properties": [{"id":"ruleset.status","value":"enabled"},{"id":"agent.enabled","value":"true"}],"version": "1.2","test":"true"}
         ]
     }
 ]
@@ -141,8 +141,8 @@ def test_fetch_rulesets(caplog):
     assert resultsort == expectedsort
     # Verify the logs contain the expected output
  #   log_output = caplog.text
- #   assert "RuleApp: ruleapp1, Ruleset: ruleset1, Highest Version Ruleset: ruleapp1/v1/ruleset2" in log_output
- #   assert "RuleApp: ruleapp2, Ruleset: ruleset2, Highest Version Ruleset: ruleapp2/v1/ruleset2" in log_output
+ #   assert "RuleApp: ruleapp1, Ruleset: ruleset1, Highest Version Ruleset: ruleapp1/1.0/ruleset2" in log_output
+ #   assert "RuleApp: ruleapp2, Ruleset: ruleset2, Highest Version Ruleset: ruleapp2/1.0/ruleset2" in log_output
 
 def test_get_input_schema():
     """
@@ -150,7 +150,7 @@ def test_get_input_schema():
     """
     # Create a test ruleset
     ruleset = {
-        "id": "test/v1/ruleset",
+        "id": "test/1.0/ruleset",
         "properties": []
     }
     
@@ -195,7 +195,7 @@ def test_agent_name_handling():
     # Create test data with two rulesets - one with agent.name and one without
     rulesets = {
         "ruleset1": {
-            "id": "test/v1/ruleset1",
+            "id": "test/1.0/ruleset1",
             "displayName": "Display Name With Spaces",
             "description": "Test description",
             "properties": [
@@ -205,7 +205,7 @@ def test_agent_name_handling():
             ]
         },
         "ruleset2": {
-            "id": "test/v1/ruleset2",
+            "id": "test/1.0/ruleset2",
             "displayName": "Unused Display Name",
             "description": "Test description 2",
             "properties": [
@@ -261,7 +261,7 @@ def test_tools_name_and_description_handling():
     # Create test data with three rulesets to test different scenarios
     rulesets = {
         "ruleset1": {
-            "id": "test/v1/ruleset1",
+            "id": "test/1.0/ruleset1",
             "displayName": "Display Name With Spaces",
             "description": "Default description",
             "properties": [
@@ -270,7 +270,7 @@ def test_tools_name_and_description_handling():
             ]
         },
         "ruleset2": {
-            "id": "test/v1/ruleset2",
+            "id": "test/1.0/ruleset2",
             "displayName": "Unused Display Name",
             "description": "Unused description",
             "properties": [
@@ -280,7 +280,7 @@ def test_tools_name_and_description_handling():
             ]
         },
         "ruleset3": {
-            "id": "test/v1/ruleset3",
+            "id": "test/1.0/ruleset3",
             "displayName": "Another Display Name",
             "description": "Another default description",
             "properties": [
@@ -331,9 +331,9 @@ def test_tools_name_and_description_handling():
         assert result[2].description == "Another default description"
         
         # Verify rulesetPath is set correctly
-        assert result[0].rulesetPath == "/test/v1/ruleset1"
-        assert result[1].rulesetPath == "/test/v1/ruleset2"
-        assert result[2].rulesetPath == "/test/v1/ruleset3"
+        assert result[0].rulesetPath == "/test/1.0/ruleset1"
+        assert result[1].rulesetPath == "/test/1.0/ruleset2"
+        assert result[2].rulesetPath == "/test/1.0/ruleset3"
         
     finally:
         # Restore the original method
@@ -345,11 +345,21 @@ def test_extract_highest_version_rulesets_agent_enabled():
     # Create test data with various agent.enabled values
     test_data = [
         {
-            "id": "app1/v1",
+            "id": "app1/1.0",
             "rulesets": [
                 {
-                    "id": "app1/v1/ruleset1",
-                    "version": "1.0",
+                    "id": "app1/1.0/ruleset1",
+                    "version": "1.9",
+                    "displayName": "Ruleset 1",
+                    "description": "Test ruleset 1",
+                    "properties": [
+                        {"id": "ruleset.status", "value": "enabled"},
+                        {"id": "agent.enabled", "value": "true"}  # This one is superseded
+                    ]
+                },
+                {
+                    "id": "app1/1.0/ruleset1",
+                    "version": "1.10",
                     "displayName": "Ruleset 1",
                     "description": "Test ruleset 1",
                     "properties": [
@@ -358,7 +368,7 @@ def test_extract_highest_version_rulesets_agent_enabled():
                     ]
                 },
                 {
-                    "id": "app1/v1/ruleset2",
+                    "id": "app1/1.0/ruleset2",
                     "version": "1.0",
                     "displayName": "Ruleset 2",
                     "description": "Test ruleset 2",
@@ -370,10 +380,10 @@ def test_extract_highest_version_rulesets_agent_enabled():
             ]
         },
         {
-            "id": "app2/v1",
+            "id": "app2/1.0",
             "rulesets": [
                 {
-                    "id": "app2/v1/ruleset3",
+                    "id": "app2/1.0/ruleset3",
                     "version": "1.0",
                     "displayName": "Ruleset 3",
                     "description": "Test ruleset 3",
@@ -383,7 +393,7 @@ def test_extract_highest_version_rulesets_agent_enabled():
                     ]
                 },
                 {
-                    "id": "app2/v1/ruleset4",
+                    "id": "app2/1.0/ruleset4",
                     "version": "1.0",
                     "displayName": "Ruleset 4",
                     "description": "Test ruleset 4",
@@ -395,10 +405,10 @@ def test_extract_highest_version_rulesets_agent_enabled():
             ]
         },
         {
-            "id": "app3/v1",
+            "id": "app3/1.0",
             "rulesets": [
                 {
-                    "id": "app3/v1/ruleset5",
+                    "id": "app3/1.0/ruleset5",
                     "version": "1.0",
                     "displayName": "Ruleset 5",
                     "description": "Test ruleset 5",
@@ -425,7 +435,7 @@ def test_extract_highest_version_rulesets_agent_enabled():
     
     # Call extract_highest_version_rulesets
     result = manager.extract_highest_version_rulesets(test_data)
-    
+    print(result)
     # Verify only rulesets with agent.enabled=true (case-insensitive) are included
     assert len(result) == 2
     assert "app1ruleset1" in result
@@ -435,6 +445,9 @@ def test_extract_highest_version_rulesets_agent_enabled():
     assert "app1ruleset2" not in result
     assert "app2ruleset4" not in result
     assert "app3ruleset5" not in result
+
+    # verify that the version of app1ruleset1 is 1.10 not 1.9
+    assert result["app1ruleset1"]["version"] == "1.10"
 
 # Run the tests
 if __name__ == '__main__':
