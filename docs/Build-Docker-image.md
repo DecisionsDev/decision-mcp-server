@@ -1,18 +1,18 @@
 # Docker image build Guide
 
-The repository features a [Dockerfile](/Dockerfile) so that you can build a Docker image running the IBM ODM Management MCP server, which can be useful to run the MCP server remotely.
+The repository features a [Dockerfile](/Dockerfile) so that you can build a Docker image running the IBM ODM Decision MCP server, which can be useful to run the MCP server remotely.
 
 ## Build
 
 - Clone this repository, and set the current directory to the root folder (which contains the `Dockerfile`)
     ```bash
-    git clone https://github.com/DecisionsDev/ibm-odm-management-mcp-server.git
-    cd ibm-odm-management-mcp-server
+    git clone https://github.com/DecisionsDev/ibm-odm-decision-mcp-server.git
+    cd ibm-odm-decision-mcp-server
     ```
 
 - Build the image
     ```bash
-    docker build --no-cache -t management-mcp-server:latest .
+    docker build --no-cache -t decision-mcp-server:latest .
     ```
 
 ## Test with ODM for Developer
@@ -24,13 +24,13 @@ Follow the instructions below to test the Docker image on your laptop:
     docker compose up &
     ```
     >Note:
-    >This creates a Docker network named `ibm-odm-management-mcp-server_default` (the name of the network is made of the current directory name and the `_default` suffix).
+    >This creates a Docker network named `ibm-odm-decision-mcp-server_default` (the name of the network is made of the current directory name and the `_default` suffix).
     >
-    >This Docker network is used at the next step so that the Management MCP server can communicate with ODM.
+    >This Docker network is used at the next step so that the Decision MCP server can communicate with ODM.
 
-- Start a Management MCP server container
+- Start a Decision MCP server container
     ```bash
-    docker run -t --rm --name management-mcp-server -p 3000:3000 --network ibm-odm-management-mcp-server_default management-mcp-server:latest
+    docker run -t --rm --name decision-mcp-server -p 3001:3000 --network ibm-odm-decision-mcp-server_default decision-mcp-server:latest
     ```
 
     You should see:
@@ -52,7 +52,7 @@ Follow the instructions below to test the Docker image on your laptop:
     INFO:     Uvicorn running on http://0.0.0.0:3000 (Press CTRL+C to quit)
     ```
 
-- Configure an AI agent tool running on your laptop such as Claude Desktop, IBM Bob or VS Code to use the Management MCP server
+- Configure an AI agent tool running on your laptop such as Claude Desktop, IBM Bob or VS Code to use the decision MCP server
 
     - refer to [Claude Desktop integration guide](./Claude-desktop-integration-guide.md#step-4-configure-claude-desktop) or [IBM Bob integration guide](./IBM-Bob-integration-guide.md#configure-ibm-bob) to edit the MCP configuration file
 
@@ -60,9 +60,9 @@ Follow the instructions below to test the Docker image on your laptop:
         ```json
         {
             "mcpServers": {
-                "ibm-odm-management-mcp-server": {
+                "ibm-odm-decision-mcp-server": {
                     "command": "npx",
-                    "args": ["mcp-remote", "http://localhost:3000/mcp", "--allow-http"]
+                    "args": ["mcp-remote", "http://localhost:3001/mcp", "--allow-http"]
                 }
             }
         }
@@ -82,14 +82,13 @@ To communicate with a different instance of ODM, add the relevant MCP arguments 
 Here is an example with Basic Authentication:
 ```bash
 docker run \
-    -t --rm -p 3000:3000 \
-    --name management-mcp-server \
+    -t --rm -p 3001:3000 \
+    --name decision-mcp-server \
     --volume ./odmserver.pem:/certs/server.pem \
-    management-mcp-server:latest \
+    decision-mcp-server:latest \
     --transport streamable-http \
     --ssl-cert-path /certs/server.pem \
-    --url       "https://${DC_HOST}/decisioncenter-api" \
-    --res-url   "https://${RES_CONSOLE_HOST}/res" \
+    --url       "https://${RES_CONSOLE_HOST}/res" \
     --username  <username> \
     --password  <password>
 ```
