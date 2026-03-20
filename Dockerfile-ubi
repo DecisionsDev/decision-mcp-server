@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable
 
 
-FROM  python:${PYTHON_VERSION}-slim-bookworm
+FROM  registry.access.redhat.com/ubi9-minimal
 
 LABEL name="IBM ODM Management MCP Server"
 LABEL summary="MCP Server exposing the REST APIs of both IBM ODM Decision Center and the Decision Server console (aka RES console)"
@@ -26,10 +26,9 @@ RUN useradd -m worker
 USER worker
 
 WORKDIR /app
+COPY --from=builder --chown=worker:worker /python /python
 COPY --from=builder --chown=worker:worker /app/ /app/
 ENV PATH="/app/.venv/bin:$PATH"
-RUN rm /app/.venv/bin/python && \
-    ln -s /usr/local/bin/python /app/.venv/bin/python
 
-ENTRYPOINT ["ibm-odm-management-mcp-server"]
-CMD ["--transport", "streamable-http", "--url", "http://odm:9060/decisioncenter-api", "--res-url", "http://odm:9060/res"]
+ENTRYPOINT ["ibm-odm-decision-mcp-server"]
+CMD ["--transport", "streamable-http", "--url", "http://odm:9060/res"]

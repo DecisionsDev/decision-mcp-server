@@ -22,9 +22,6 @@ FROM  python:${PYTHON_VERSION}-slim-bookworm
 LABEL name="IBM ODM Decision MCP Server"
 LABEL summary="The IBM ODM Decision MCP Server exposes decisions (aka rulesets) as tools for AI assistants"
 
-# temporary
-RUN apt update && apt install -y curl
-
 RUN useradd -m worker
 USER worker
 

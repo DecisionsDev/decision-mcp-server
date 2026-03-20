@@ -15,7 +15,6 @@
 import requests
 from requests.adapters import HTTPAdapter
 import ssl
-from validator_collection import  checkers
 import base64
 import logging
 import json
@@ -106,8 +105,6 @@ class Credentials:
         # Get logger for this class with explicit name to ensure consistency
         self.logger = logging.getLogger("decision_mcp_server.Credentials")
         self.odm_url=odm_url.rstrip('/')
-        if not checkers.is_url(self.odm_url):
-            raise ValueError("'"+self.odm_url+"' is not a valid URL")
 
         if verify_ssl:
             import certifi
