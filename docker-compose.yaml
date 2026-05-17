@@ -5,7 +5,6 @@ services:
     container_name: odm
     environment:
       - LICENSE=accept
-      - SAMPLE=true
     healthcheck:
       test: curl -k -f http://localhost:9060/decisioncenter/healthCheck || exit 1
       interval: 5s
@@ -25,3 +24,63 @@ services:
     entrypoint: >
       sh -c "cd /samples/ && ./deploy_demo_materials.sh basic http://odm:9060/decisioncenter-api http://localhost:9060/res odmAdmin odmAdmin &&  echo '✅ ODM Ready for MCP Server' "
     restart: "no"
+  
+  ibm-odm-decision-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 0
+      no_cache: true
+    image: ibm-odm-decision-mcp-server:latest
+    container_name: ibm-odm-decision-mcp-server
+    depends_on:
+      odm:
+        condition: service_healthy
+    ports:
+      - 3001:3000
+    secrets:
+      - odm_password
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        exec ibm-odm-decision-mcp-server \
+          --transport streamable-http \
+          --url http://odm:9060/res \
+          --username resDeployer \
+          --password "$(cat /run/secrets/odm_password)" \
+          --trace-enable True \
+          --traces-dir /home/worker/traces
+    profiles: [ibm-odm-decision-mcp-server]
+
+  ibm-odm-decision-mcp-server-ubi:
+    build:
+      context: .
+      dockerfile: Dockerfile-ubi
+      args:
+        BUILDKIT_INLINE_CACHE: 0
+      no_cache: true
+    image: ibm-odm-decision-mcp-server-ubi:latest
+    container_name: ibm-odm-decision-mcp-server-ubi
+    depends_on:
+      odm:
+        condition: service_healthy
+    ports:
+      - 3001:3000
+    secrets:
+      - odm_password
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        exec ibm-odm-decision-mcp-server \
+          --transport streamable-http \
+          --url http://odm:9060/res \
+          --username resDeployer \
+          --password "$(cat /run/secrets/odm_password)" \
+          --trace-enable True \
+          --traces-dir /home/worker/traces
+    profiles: [ibm-odm-decision-mcp-server-ubi]
+
+secrets:
+  odm_password:
+    environment: ODM_PASSWORD

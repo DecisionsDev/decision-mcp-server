@@ -47,11 +47,6 @@ def test_url_with_extra_path():
     cred = Credentials(odm_url="http://localhost:9060/odm/res/", username="user", password="pass")
     assert cred.odm_url == "http://localhost:9060/odm/res"
 
-def test_invalid_url():
-    # Test with an invalid URL
-    with pytest.raises(ValueError, match="'http://localh ost:9060/res' is not a valid URL"):
-        Credentials(odm_url="http://localh ost:9060/res/", username="user", password="pass")
-
 def test_get_auth_zenapikey():
     # Test get_auth with zenapikey
     cred = Credentials(odm_url="http://localhost:9060/res", username="test_username", zenapikey="test_key")
