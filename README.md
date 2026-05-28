@@ -545,6 +545,12 @@ These annotations provide:
 
 By combining rich service descriptions with properly annotated model classes, you can create tool definitions that LLMs can understand and use with high precision, reducing errors and improving the quality of interactions.
 
+## Docker image
+
+The repository features a [Dockerfile](/Dockerfile) so that you can build a Docker image running the IBM ODM Management MCP server, which can be useful to run the MCP server remotely.
+
+You can find instructions in the [Build-Docker-image](/docs/Build-Docker-image.md) readme.
+
 ## More information
 
 - For IBM Operational Decision Manager (ODM), see [IBM Documentation](https://www.ibm.com/docs/en/odm).
