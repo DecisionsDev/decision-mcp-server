@@ -15,7 +15,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pyjwt>=2.12.0",
+    "pyjwt>=2.13.0",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.1.0",
     "pytest-cov>=6.2.1",
