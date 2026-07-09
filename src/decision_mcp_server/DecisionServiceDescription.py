@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mcp.types as types
+from mcp_types import Tool
 class DecisionServiceDescription:
     """
     Represents a decision service description for a specific tool.
@@ -22,7 +22,7 @@ class DecisionServiceDescription:
         engine (str): The engine used for decision processing (default is "odm").
         rulesetPath (str): The path to the ruleset, constructed from the ruleset's ID.
         ruleset (dict): The ruleset metadata dictionary.
-        tool_description (types.Tool): An object describing the tool, including its name, description, and input schema.
+        tool_description (Tool): An object describing the tool, including its name, description, and input schema.
 
     Args:
         tool_name (str): The name of the tool.
@@ -36,7 +36,7 @@ class DecisionServiceDescription:
         self.rulesetPath = "/" + str(ruleset["id"])
         self.ruleset = ruleset
 
-        self.tool_description = types.Tool(
+        self.tool_description = Tool(
             name=tool_name,
             description=description,
             inputSchema=input_schema,
