@@ -111,11 +111,15 @@ class DecisionMCPServer:
             self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
                                                  runtime_credentials=self.runtime_credentials)
 
-        # this call may throw an exception, handled by Server.call_tool.handler
-        result = self.manager.invokeDecisionService(
-            rulesetPath=self.repository[name].rulesetPath,
-            decisionInputs=arguments
-        )
+        try:
+            result = self.manager.invokeDecisionService(
+                rulesetPath=self.repository[name].rulesetPath,
+                decisionInputs=arguments
+            )
+            is_error = False
+        except Exception as e:
+            result = str(e)
+            is_error = True
 
         # Extract decision ID and trace if available
         decision_id = None
@@ -170,9 +174,10 @@ class DecisionMCPServer:
                     content=[
                         TextContent(
                             type="text", 
-                            text=response_text
+                            text=response_text,
                         )
-                    ]
+                    ],
+                    is_error=is_error,
                 )
         
     # Add a new method to list execution traces
