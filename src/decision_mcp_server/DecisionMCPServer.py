@@ -190,7 +190,7 @@ class DecisionMCPServer:
         trace_metadata = self.execution_traces.get_all_metadata()
         return [
             Resource(
-                uri=AnyUrl(f"trace://{metadata['id']}"),
+                uri=f"trace://{metadata['id']}",
                 name=f"Execution Trace: {metadata['tool_name']}",
                 description=f"Trace executed at {metadata['timestamp']}",
                 mimeType="application/json",
