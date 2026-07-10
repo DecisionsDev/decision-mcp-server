@@ -22,10 +22,10 @@ class DummyTool:
     def __init__(self, name, description, inputSchema):
         self.name = name
         self.description = description
-        self.inputSchema = inputSchema
+        self.input_schema = inputSchema
 
 dummy_types = types.SimpleNamespace(Tool=DummyTool)
-sys.modules['mcp.types'] = dummy_types
+sys.modules['mcp_types'] = dummy_types
 
 from decision_mcp_server.DecisionServiceDescription import DecisionServiceDescription
 
@@ -44,4 +44,4 @@ def test_decision_service_description_initialization():
     assert desc.ruleset == ruleset
     assert desc.tool_description.name == tool_name
     assert desc.tool_description.description == description
-    assert desc.tool_description.inputSchema == input_schema
+    assert desc.tool_description.input_schema == input_schema

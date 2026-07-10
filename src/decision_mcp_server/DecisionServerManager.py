@@ -16,11 +16,9 @@ import logging
 import json
 from collections import defaultdict
 import requests
-import yaml
 import jsonref
-from typing import Dict, Any, Optional
-from requests.exceptions import RequestException
 from .DecisionServiceDescription import DecisionServiceDescription
+from mcp.server.mcpserver.exceptions import ToolError
 class DecisionServerManager:
     """
     :no-index:
@@ -315,6 +313,8 @@ class DecisionServerManager:
         # check response
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 404:
+            raise ToolError(f"Unknown tool: {name}")
         else:
             err = response.content.decode('utf-8')
             self.logger.error(f"Request error, status: {response.status_code}, error: {err}")

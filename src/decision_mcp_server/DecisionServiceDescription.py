@@ -39,7 +39,7 @@ class DecisionServiceDescription:
         self.tool_description = Tool(
             name=tool_name,
             description=description,
-            inputSchema=input_schema,
+            input_schema=input_schema,
         )
 
    

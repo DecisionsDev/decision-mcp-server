@@ -17,6 +17,7 @@ from typing import Optional
 from mcp.server.mcpserver.context import Context
 from mcp_types import Tool, Resource, CallToolResult, TextContent
 from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import AnyUrl
 import logging
 import urllib3
@@ -103,7 +104,7 @@ class DecisionMCPServer:
     async def call_tool(self, name: str, arguments: dict | None, context: Context) -> CallToolResult:
         if self.repository.get(name) is None:
             self.logger.error("Tool not found: %s", name)
-            raise ValueError(f"Unknown tool: {name}")
+            raise ToolError(f"Unknown tool: {name}")
 
         self.logger.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
         # Ensure manager is initialized before using it
@@ -117,6 +118,8 @@ class DecisionMCPServer:
                 decisionInputs=arguments
             )
             is_error = False
+        except ToolError as e:
+            raise(e)
         except Exception as e:
             result = str(e)
             is_error = True
