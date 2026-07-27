@@ -107,8 +107,11 @@ class Credentials:
         self.odm_url=odm_url.rstrip('/')
 
         if verify_ssl:
-            import certifi
-            self.cacert = certifi.where()
+            if ssl_cert_path:
+                self.cacert = ssl_cert_path
+            else:
+                import certifi
+                self.cacert = certifi.where()
         else:
             self.cacert = None
 
