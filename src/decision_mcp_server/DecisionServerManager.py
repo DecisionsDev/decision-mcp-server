@@ -178,37 +178,38 @@ class DecisionServerManager:
             dict: The input schema of the ruleset.
         """
         try:
-                # Make the GET request with headers
-                self.logger.info("Retrieve OpenAPI schema at "+self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi')
-                session = self.runtime_credentials.get_session()
-                response = session.get(self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=session.headers, verify=self.runtime_credentials.cacert)
-                self.runtime_credentials.cleanup()
+            # Make the GET request with headers
+            self.logger.info("Retrieve OpenAPI schema at "+self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi')
+            session = self.runtime_credentials.get_session()
+            response = session.get(self.runtime_credentials.odm_url+'/rest/'+ruleset["id"]+ '/openapi?format=json', headers=session.headers, verify=self.runtime_credentials.cacert)
 
-                # Check if the request was successful
-                if response.status_code == 200:
-                    self.logger.info("Request successful!")
+            # Check if the request was successful
+            if response.status_code == 200:
+                self.logger.info("Request successful!")
 
-                    # Resolve $ref references
-                    jsonopenApiData = jsonref.JsonRef.replace_refs(json.loads(response.text))
+                # Resolve $ref references
+                jsonopenApiData = jsonref.JsonRef.replace_refs(json.loads(response.text))
 
-                    # Get the response schema (for 200 response as an example)
-                    # Extract the input 
-                    inputParameterSchema= jsonopenApiData["paths"]["/"+ruleset["id"]]["post"]["requestBody"]["content"]["application/json"]["schema"]
-                    if "properties" in inputParameterSchema and "__DecisionID__" in inputParameterSchema["properties"]:
-                        del inputParameterSchema["properties"]["__DecisionID__"]
-                    # Convert to plain JSON-serializable dict
-                    return self.to_plain_dict(inputParameterSchema)
-                else:
-                    self.logger.error("Request failed with status code: %s", response.status_code)
-                    self.logger.error("Response: %s", response.text)
-                    raise Exception(response.text)
+                # Get the response schema (for 200 response as an example)
+                # Extract the input 
+                inputParameterSchema= jsonopenApiData["paths"]["/"+ruleset["id"]]["post"]["requestBody"]["content"]["application/json"]["schema"]
+                if "properties" in inputParameterSchema and "__DecisionID__" in inputParameterSchema["properties"]:
+                    del inputParameterSchema["properties"]["__DecisionID__"]
+                # Convert to plain JSON-serializable dict
+                return self.to_plain_dict(inputParameterSchema)
+            else:
+                self.logger.error("Request failed with status code: %s", response.status_code)
+                self.logger.error("Response: %s", response.text)
+                raise Exception(response.text)
 
         except requests.exceptions.RequestException as e:
-                self.logger.error("An error occurred: %s", e)
-                raise e
+            self.logger.error("An error occurred: %s", e)
+            raise e
         except json.JSONDecodeError as e:
-                self.logger.error("Failed to decode JSON response.")
-                raise e
+            self.logger.error("Failed to decode JSON response.")
+            raise e
+        finally:
+            self.runtime_credentials.cleanup()
         
 
     def get_input_schema(self, ruleset):
@@ -267,7 +268,6 @@ class DecisionServerManager:
             self.logger.info(self.console_credentials.odm_url+'/api/v1/ruleapps')
             session = self.console_credentials.get_session()
             response = session.get(self.console_credentials.odm_url+'/api/v1/ruleapps', headers=session.headers, verify=self.console_credentials.cacert)
-            self.console_credentials.cleanup()
 
             # Check if the request was successful
             if response.status_code == 200:
@@ -287,6 +287,8 @@ class DecisionServerManager:
             self.logger.error("An error occurred: %s", e)
         except json.JSONDecodeError:
             self.logger.error("Failed to decode JSON response.")
+        finally:
+            self.console_credentials.cleanup()
 
     def invokeDecisionService(self, rulesetPath, decisionInputs, trace=True):
         """
@@ -307,10 +309,12 @@ class DecisionServerManager:
         if trace:
             params.update(self.trace)  # Add trace information to params
 
-        session = self.runtime_credentials.get_session()
-        response = session.post(self.runtime_credentials.odm_url+'/rest'+rulesetPath, headers=session.headers,
+        try:
+            session = self.runtime_credentials.get_session()
+            response = session.post(self.runtime_credentials.odm_url+'/rest'+rulesetPath, headers=session.headers,
                                 json=params)
-        self.runtime_credentials.cleanup()
+        finally:
+            self.runtime_credentials.cleanup()
 
         # check response
         if response.status_code == 200:
