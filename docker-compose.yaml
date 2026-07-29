@@ -32,7 +32,7 @@ services:
       args:
         BUILDKIT_INLINE_CACHE: 0
       no_cache: true
-    image: ibm-odm-decision-mcp-server:latest
+    image: $IMAGE:$TAG
     container_name: ibm-odm-decision-mcp-server
     depends_on:
       odm:
@@ -60,7 +60,7 @@ services:
       args:
         BUILDKIT_INLINE_CACHE: 0
       no_cache: true
-    image: ibm-odm-decision-mcp-server-ubi:latest
+    image: $IMAGE:$TAG
     container_name: ibm-odm-decision-mcp-server-ubi
     depends_on:
       odm:
