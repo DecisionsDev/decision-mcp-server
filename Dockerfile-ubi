@@ -1,6 +1,5 @@
-ARG PYTHON_VERSION=3.14
-
 FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+ARG PYTHON_VERSION=3.14
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/python
@@ -18,9 +17,19 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 FROM  registry.access.redhat.com/ubi9-minimal
-
-LABEL name="IBM ODM Management MCP Server"
-LABEL summary="MCP Server exposing the REST APIs of both IBM ODM Decision Center and the Decision Server console (aka RES console)"
+ARG VERSION
+LABEL org.opencontainers.image.authors="Laurent GRATEAU <laurent.grateau@fr.ibm.com>"
+LABEL name="IBM ODM Decision MCP Server"
+LABEL vendor="IBM"
+LABEL description="The Decision MCP Server exposes the REST APIs of IBM ODM Decision Server runtime\
+ enabling to execute decisions (aka rulesets)"
+LABEL summary="The Decision MCP Server enables to execute IBM ODM decisions (aka rulesets)"
+LABEL version=${VERSION}
+LABEL product-version=${VERSION}
+LABEL product-id="IBM Operational Decision Manager Server runtime MCP server"
+LABEL io.openshift.tags="odm,dba,dbamc"
+LABEL io.k8s.description="MCP Server enabling to execute IBM ODM decisions (aka rulesets)"
+LABEL io.k8s.display-name="Decision MCP Server"
 
 RUN useradd -m worker
 USER worker
@@ -28,7 +37,16 @@ USER worker
 WORKDIR /app
 COPY --from=builder --chown=worker:worker /python /python
 COPY --from=builder --chown=worker:worker /app/ /app/
+
 ENV PATH="/app/.venv/bin:$PATH"
+ENV TRANSPORT=streamable-http
+ENV VERIFY_SSL=True
+ENV VERIFY_SSL_HOSTNAME=True
+ENV LOG_LEVEL=INFO
+ENV TRACE_ENABLE=True
+ENV TRACE_MAXSIZE=200
+ENV TRACES_DIR=/home/worker/traces
 
 ENTRYPOINT ["ibm-odm-decision-mcp-server"]
-CMD ["--transport", "streamable-http", "--url", "http://odm:9060/res"]
+CMD []
+EXPOSE 3000
