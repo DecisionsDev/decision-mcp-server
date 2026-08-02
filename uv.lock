@@ -311,7 +311,7 @@ dev = [
 requires-dist = [
     { name = "cryptography", specifier = ">=48.0.1" },
     { name = "jsonref" },
-    { name = "mcp", specifier = ">=1.12.2" },
+    { name = "mcp", specifier = ">=1.28.1,<2.0.0" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "python-multipart", specifier = ">=0.0.30" },
     { name = "pyyaml" },
