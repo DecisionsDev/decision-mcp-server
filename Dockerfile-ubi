@@ -29,7 +29,7 @@ LABEL product-version=${VERSION}
 LABEL product-id="IBM Operational Decision Manager Server runtime MCP server"
 LABEL io.openshift.tags="odm,dba,dbamc"
 LABEL io.k8s.description="MCP Server enabling to execute IBM ODM decisions (aka rulesets)"
-LABEL io.k8s.display-name="Decision MCP Server"
+LABEL io.k8s.display-name="ODM Decision MCP Server"
 
 RUN useradd -m worker
 USER worker
