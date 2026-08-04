@@ -96,6 +96,7 @@ services:
       dockerfile: Dockerfile-ubi
       platforms:
         - "linux/amd64"
+        - "linux/arm64"
       args:
         BUILDKIT_INLINE_CACHE: 0
         VERSION: $VERSION
