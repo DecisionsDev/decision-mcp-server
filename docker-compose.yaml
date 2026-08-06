@@ -89,19 +89,6 @@ services:
           --password "$(cat /run/secrets/odm_password)"
     profiles: [ibm-odm-decision-mcp-server-ubi]
 
-  amd64_arm64:
-    image: $REPOSITORY/$IMAGE:$TAG
-    build:
-      context: .
-      dockerfile: Dockerfile-ubi
-      platforms:
-        - "linux/amd64"
-        - "linux/arm64"
-      args:
-        BUILDKIT_INLINE_CACHE: 0
-        VERSION: $VERSION
-      no_cache: true
-
 secrets:
   odm_password:
     environment: ODM_PASSWORD
