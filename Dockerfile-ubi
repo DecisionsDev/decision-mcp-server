@@ -27,16 +27,8 @@ USER worker
 WORKDIR /app
 COPY --from=builder --chown=worker:worker /python /python
 COPY --from=builder --chown=worker:worker /app/ /app/
-
 ENV PATH="/app/.venv/bin:$PATH"
-ENV TRANSPORT=streamable-http
-ENV VERIFY_SSL=True
-ENV VERIFY_SSL_HOSTNAME=True
-ENV LOG_LEVEL=INFO
-ENV TRACE_ENABLE=True
-ENV TRACE_MAXSIZE=200
-ENV TRACES_DIR=/home/worker/traces
 
-ENTRYPOINT ["ibm-odm-decision-mcp-server"]
+ENTRYPOINT ["ibm-odm-management-mcp-server"]
 CMD []
 EXPOSE 3000

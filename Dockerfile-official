@@ -9,11 +9,11 @@ ENV PATH="/root/.local/bin/:$PATH"
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
 # required packages:
-# - tar gzip                    for uv-installer
-# - gcc openssl openssl-devel   to compile the cryptography python library (not available as binary on s390x)
+# - tar gzip                for uv-installer
+# - python3-cryptography    cryptography python library (not available as binary on s390x otherwise)
 RUN set -ex; \
     microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
-    microdnf -y install tar gzip gcc openssl openssl-devel; \
+    microdnf -y install tar gzip python3-cryptography; \
     sh /uv-installer.sh; \
     uv python install ${PYTHON_VERSION}
 
