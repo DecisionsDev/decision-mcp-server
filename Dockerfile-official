@@ -23,7 +23,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=README.md,target=README.md \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-dev --no-editable
+    $( [ "$(uname -m)" = "s390x" ] && uv venv --system-site-packages; ) \
+    uv sync --frozen --no-dev --no-editable \
+        $( [ "$(uname -m)" = "s390x" ] && echo "--extra s390x --no-install-package cryptography" )
 
 
 FROM registry.access.redhat.com/ubi9-minimal
