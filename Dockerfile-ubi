@@ -29,6 +29,6 @@ COPY --from=builder --chown=worker:worker /python /python
 COPY --from=builder --chown=worker:worker /app/ /app/
 ENV PATH="/app/.venv/bin:$PATH"
 
-ENTRYPOINT ["ibm-odm-management-mcp-server"]
+ENTRYPOINT ["ibm-odm-decision-mcp-server"]
 CMD []
 EXPOSE 3000
