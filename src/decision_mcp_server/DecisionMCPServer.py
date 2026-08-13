@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import asyncio
 import json
 from typing import Optional
-from mcp.server.models import InitializationOptions
-import mcp.types as types
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver.context import Context
+from mcp_types import Tool, Resource, CallToolResult, TextContent
+from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import AnyUrl
 import logging
 import urllib3
@@ -64,10 +64,10 @@ class DecisionMCPServer:
         self.port      = port
         self.path      = path
 
-    async def list_resources(self) -> list[types.Resource]:
+    async def list_resources(self) -> list[Resource]:
         return [
-            types.Resource(
-                uri=AnyUrl(f"decisionservice://internal/{name}"),
+            Resource(
+                uri=f"decisionservice://internal/{name}",
                 name=f"DecisionService: {name}",
                 description=f"Decision Service: {name}",
                 mimeType="text/plain",
@@ -85,7 +85,7 @@ class DecisionMCPServer:
             return str(self.repository[name].__dict__)
         raise ValueError(f"DecisionService not found: {name}")
 
-    async def list_tools(self) -> list[types.Tool]:
+    async def list_tools(self) -> list[Tool]:
         self.logger.info("Listing ODM tools")
         # Ensure manager is initialized before using it
         if self.manager is None:
@@ -101,10 +101,10 @@ class DecisionMCPServer:
             self.repository[decisionService.tool_name] = decisionService
         return tools
 
-    async def call_tool(self, name: str, arguments: dict | None) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    async def call_tool(self, name: str, arguments: dict | None, context: Context) -> CallToolResult:
         if self.repository.get(name) is None:
             self.logger.error("Tool not found: %s", name)
-            raise ValueError(f"Unknown tool: {name}")
+            raise ToolError(f"Unknown tool: {name}")
 
         self.logger.info("Invoking decision service for tool: %s with arguments: %s", name, arguments)
         # Ensure manager is initialized before using it
@@ -112,11 +112,17 @@ class DecisionMCPServer:
             self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
                                                  runtime_credentials=self.runtime_credentials)
 
-        # this call may throw an exception, handled by Server.call_tool.handler
-        result = self.manager.invokeDecisionService(
-            rulesetPath=self.repository[name].rulesetPath,
-            decisionInputs=arguments
-        )
+        try:
+            result = self.manager.invokeDecisionService(
+                rulesetPath=self.repository[name].rulesetPath,
+                decisionInputs=arguments
+            )
+            is_error = False
+        except ToolError as e:
+            raise(e)
+        except Exception as e:
+            result = str(e)
+            is_error = True
 
         # Extract decision ID and trace if available
         decision_id = None
@@ -167,15 +173,18 @@ class DecisionMCPServer:
         else:
             self.logger.debug("Trace storage is disabled, not creating execution trace")
 
-        return [
-            types.TextContent(
-                type="text",
-                text=response_text
-            )
-        ]
+        return CallToolResult(
+                    content=[
+                        TextContent(
+                            type="text", 
+                            text=response_text,
+                        )
+                    ],
+                    is_error=is_error,
+                )
         
     # Add a new method to list execution traces
-    async def list_execution_traces(self) -> list[types.Resource]:
+    async def list_execution_traces(self) -> list[Resource]:
         """Return a list of execution traces as resources."""
         if not self.trace_enable or self.execution_traces is None:
             self.logger.info("Trace storage is disabled, returning empty list")
@@ -183,8 +192,8 @@ class DecisionMCPServer:
             
         trace_metadata = self.execution_traces.get_all_metadata()
         return [
-            types.Resource(
-                uri=AnyUrl(f"trace://{metadata['id']}"),
+            Resource(
+                uri=f"trace://{metadata['id']}",
                 name=f"Execution Trace: {metadata['tool_name']}",
                 description=f"Trace executed at {metadata['timestamp']}",
                 mimeType="application/json",
@@ -206,21 +215,23 @@ class DecisionMCPServer:
         self.manager = DecisionServerManager(console_credentials=self.console_credentials, 
                                              runtime_credentials=self.runtime_credentials)
 
-        self.server = FastMCP(name="ibm-odm-decision-mcp-server",
+        self.server = MCPServer(name="ibm-odm-decision-mcp-server",
                               instructions=INSTRUCTIONS,
-                              host=self.host,
-                              port=self.port,
-                              sse_path=self.path,
-                              streamable_http_path=self.path,
                              )
 
         # Register handlers
-        self.server._mcp_server.list_resources()(self.list_resources)
-        self.server._mcp_server.read_resource()(self.read_resource)
-        self.server._mcp_server.list_tools()(self.list_tools)
-        self.server._mcp_server.call_tool()(self.call_tool)
+        self.server.read_resource  = self.read_resource
+        self.server.list_resources = self.list_resources
+        self.server.list_tools = self.list_tools
+        self.server.call_tool  = self.call_tool
 
-        self.server.run(transport=self.transport)
+                        # sse_path=self.path,
+                        # stateless_http=True,
+        self.server.run(transport=self.transport,
+                        host=self.host,
+                        port=self.port,
+                        streamable_http_path=self.path,
+        )
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Decision MCP Server")
