@@ -19,8 +19,9 @@ import argparse
 from decision_mcp_server.DecisionMCPServer import DecisionMCPServer, parse_arguments, create_credentials
 from decision_mcp_server.Credentials import Credentials
 from decision_mcp_server.config import INSTRUCTIONS
-import mcp.types as types
-from mcp.server.fastmcp import FastMCP
+from mcp_types import CallToolResult
+from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 import json
 
 # Test fixtures
@@ -42,7 +43,7 @@ def mock_runtime_credentials():
 
 @pytest.fixture
 def mock_server():
-    return Mock(spec=FastMCP)
+    return Mock(spec=MCPServer)
 
 @pytest.fixture
 def decision_server(mock_console_credentials, mock_runtime_credentials, mock_server):
@@ -448,7 +449,7 @@ async def test_call_tool_success(server, mock_manager):
     server.repository[tool_name] = Mock(rulesetPath="/test/path")
 
     # Execute
-    result = await server.call_tool(tool_name, arguments)
+    result = await server.call_tool(tool_name, arguments, {})
 
     # Verify
     assert mock_manager.invokeDecisionService.called
@@ -458,20 +459,20 @@ async def test_call_tool_success(server, mock_manager):
     }
     
     # Verify response format
-    assert len(result) == 1
-    assert isinstance(result[0], types.TextContent)
-    assert result[0].type == "text"
+    assert len(result.content) == 1
+    assert isinstance(result, CallToolResult)
+    assert result.content[0].type == "text"
     
     # Verify response content
-    response_data = json.loads(result[0].text)
+    response_data = json.loads(result.content[0].text)
     assert response_data["result"] == "decision_result"
     assert "__DecisionID__" not in response_data
 
 @pytest.mark.asyncio
 async def test_call_tool_unknown_tool(server):
     # Try to call non-existent tool
-    with pytest.raises(ValueError) as exc_info:
-        await server.call_tool("unknown_tool", {})
+    with pytest.raises(ToolError) as exc_info:
+        await server.call_tool("unknown_tool", {}, {})
     assert str(exc_info.value) == "Unknown tool: unknown_tool"
 
 @pytest.mark.asyncio
@@ -479,11 +480,11 @@ async def test_call_tool_error_handling(server, mock_manager):
     # Setup
     tool_name = "tool1"
     server.repository[tool_name] = Mock(rulesetPath="/test/path")
-    mock_manager.invokeDecisionService.side_effect = Exception("Decision service error")
+    mock_manager.invokeDecisionService.side_effect = ToolError("Decision service error")
 
     # Verify error is propagated
-    with pytest.raises(Exception) as exc_info:
-        await server.call_tool(tool_name, {})
+    with pytest.raises(ToolError) as exc_info:
+        await server.call_tool(tool_name, {}, {})
     assert str(exc_info.value) == "Decision service error"
 
 @pytest.mark.asyncio
@@ -494,12 +495,12 @@ async def test_call_tool_non_dict_response(server, mock_manager):
     server.repository[tool_name] = Mock(rulesetPath="/test/path")
 
     # Execute
-    result = await server.call_tool(tool_name, {})
+    result = await server.call_tool(tool_name, {}, {})
 
     # Verify string handling
-    assert len(result) == 1
-    assert isinstance(result[0], types.TextContent)
-    assert result[0].text == "string_response"
+    assert len(result.content) == 1
+    assert isinstance(result, CallToolResult)
+    assert result.content[0].text == "string_response"
 
 # Test trace functionality with new parameters
 @pytest.fixture
@@ -542,14 +543,14 @@ async def test_call_tool_with_traces_enabled(server_with_traces_enabled):
     server_with_traces_enabled.repository[tool_name] = Mock(rulesetPath="/test/path")
     
     # Execute
-    result = await server_with_traces_enabled.call_tool(tool_name, arguments)
+    result = await server_with_traces_enabled.call_tool(tool_name, arguments, {})
     
     # Verify trace storage was used
     assert server_with_traces_enabled.execution_traces is not None
     
     # Verify response
-    assert len(result) == 1
-    assert result[0].type == "text"
+    assert len(result.content) == 1
+    assert result.content[0].type == "text"
 
 @pytest.mark.asyncio
 async def test_call_tool_with_traces_disabled(server_with_traces_disabled):
@@ -567,14 +568,14 @@ async def test_call_tool_with_traces_disabled(server_with_traces_disabled):
     server_with_traces_disabled.repository[tool_name] = Mock(rulesetPath="/test/path")
     
     # Execute
-    result = await server_with_traces_disabled.call_tool(tool_name, arguments)
+    result = await server_with_traces_disabled.call_tool(tool_name, arguments, {})
     
     # Verify trace storage was not used
     assert server_with_traces_disabled.execution_traces is None
     
     # Verify response
-    assert len(result) == 1
-    assert result[0].type == "text"
+    assert len(result.content) == 1
+    assert result.content[0].type == "text"
 
 @pytest.mark.asyncio
 async def test_list_execution_traces_with_traces_disabled(server_with_traces_disabled):
@@ -638,7 +639,7 @@ def test_server_initialization_with_default_transport():
     assert server.path == "/mcp"
 
 def test_server_start_with_streamable_http_transport():
-    """Test that server.start() correctly configures FastMCP with streamable-http transport."""
+    """Test that server.start() correctly configures SDK_MCPServer with streamable-http transport."""
     credentials = Credentials(
         odm_url="http://test:9060/res",
         username="test",
@@ -655,8 +656,8 @@ def test_server_start_with_streamable_http_transport():
         path="/custom-path"
     )
     
-    # Mock the FastMCP and its run method
-    with patch('decision_mcp_server.DecisionMCPServer.FastMCP') as mock_fastmcp_class, \
+    # Mock the SDK_MCPServer and its run method
+    with patch('decision_mcp_server.DecisionMCPServer.MCPServer') as mock_fastmcp_class, \
          patch('decision_mcp_server.DecisionMCPServer.DecisionServerManager') as mock_manager_class:
         
         # Setup mocks
@@ -673,24 +674,25 @@ def test_server_start_with_streamable_http_transport():
         # Call start
         server.start()
         
-        # Verify FastMCP was initialized with correct parameters
+        # Verify SDK_MCPServer was initialized with correct parameters
         mock_fastmcp_class.assert_called_once_with(
             name="ibm-odm-decision-mcp-server",
             instructions=INSTRUCTIONS,
-            host="127.0.0.1",
-            port=3001,
-            sse_path="/custom-path",
-            streamable_http_path="/custom-path"
         )
         
         # Verify run was called with streamable-http transport
-        mock_fastmcp.run.assert_called_once_with(transport="streamable-http")
+        mock_fastmcp.run.assert_called_once_with(
+            transport="streamable-http",
+            host="127.0.0.1",
+            port=3001,
+            streamable_http_path="/custom-path"
+        )
         
         # Verify manager was initialized
         assert server.manager is not None
 
 def test_server_start_with_sse_transport():
-    """Test that server.start() correctly configures FastMCP with sse transport."""
+    """Test that server.start() correctly configures SDK_MCPServer with sse transport."""
     credentials = Credentials(
         odm_url="http://test:9060/res",
         username="test",
@@ -707,8 +709,8 @@ def test_server_start_with_sse_transport():
         path="/sse-endpoint"
     )
     
-    # Mock the FastMCP and its run method
-    with patch('decision_mcp_server.DecisionMCPServer.FastMCP') as mock_fastmcp_class, \
+    # Mock the SDK_MCPServer and its run method
+    with patch('decision_mcp_server.DecisionMCPServer.MCPServer') as mock_fastmcp_class, \
          patch('decision_mcp_server.DecisionMCPServer.DecisionServerManager') as mock_manager_class:
         
         # Setup mocks
@@ -725,15 +727,17 @@ def test_server_start_with_sse_transport():
         # Call start
         server.start()
         
-        # Verify FastMCP was initialized with correct parameters
+        # Verify SDK_MCPServer was initialized with correct parameters
+            # sse_path="/sse-endpoint",
         mock_fastmcp_class.assert_called_once_with(
             name="ibm-odm-decision-mcp-server",
             instructions=INSTRUCTIONS,
-            host="0.0.0.0",
-            port=8080,
-            sse_path="/sse-endpoint",
-            streamable_http_path="/sse-endpoint"
         )
         
         # Verify run was called with sse transport
-        mock_fastmcp.run.assert_called_once_with(transport="sse")
+        mock_fastmcp.run.assert_called_once_with(
+            transport="sse",
+            host="0.0.0.0",
+            port=8080,
+            streamable_http_path="/sse-endpoint"
+        )
