@@ -4,7 +4,34 @@ version = "0.9.0"
 description = "An MCP Server enabling integration with IBM Decision Server Runtime to retrieve and invoke decision services."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [ "mcp>=2.0.0,<3","requests","pyyaml","jsonref","validator_collection","PyJWT>=2.13.0","cryptography>=48.0.1","starlette>=1.3.1","python-multipart>=0.0.30"]
+dependencies = [
+    "jsonref",
+    "mcp>=2.0.0,<3",
+    "pyjwt",
+    "python-multipart",
+    "pyyaml",
+    "requests",
+    "starlette",
+    "validator_collection",
+]
+
+[project.optional-dependencies]
+default = [
+    "cryptography>=50.0.0",
+]
+s390x = [
+    "cryptography==36.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-html",
+    "responses",
+]
+
 [[project.authors]]
 name = "laurent grateau"
 email = "laurent.grateau@fr.ibm.com"
@@ -13,22 +40,12 @@ email = "laurent.grateau@fr.ibm.com"
 requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
-[dependency-groups]
-dev = [
-    "cryptography>=48.0.1",
-    "idna>=3.15",
-    "mcp>=2.0.0,<3",
-    "pydantic-settings>=2.14.2",
-    "pyjwt>=2.13.0",
-    "pytest>=9.0.3",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "pytest-html>=4.1.1",
-    "python-multipart>=0.0.30",
-    "responses>=0.25.8",
-    "starlette>=1.3.1",
-    "urllib3>=2.7.0",
-    "validator-collection>=1.5.0",
+[tool.uv]
+conflicts = [
+    [
+        { extra = "default" },
+        { extra = "s390x" },
+    ],
 ]
 
 [project.scripts]

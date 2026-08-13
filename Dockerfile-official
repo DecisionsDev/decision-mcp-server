@@ -1,0 +1,64 @@
+FROM registry.access.redhat.com/ubi9-minimal AS builder
+ARG PYTHON_VERSION=3.14
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_PYTHON_INSTALL_DIR=/python
+ENV UV_PYTHON_PREFERENCE=only-managed
+ENV PATH="/root/.local/bin/:$PATH"
+
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+
+# required packages:
+# - tar gzip                for uv-installer
+# - python3-cryptography    cryptography python library (not available as binary on s390x otherwise)
+RUN set -ex; \
+    microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
+    microdnf -y install tar gzip python3-cryptography; \
+    sh /uv-installer.sh; \
+    uv python install ${PYTHON_VERSION}
+
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=src,target=src \
+    --mount=type=bind,source=README.md,target=README.md \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    $( [ "$(uname -m)" = "s390x" ] && uv venv --system-site-packages; ) \
+    uv sync --frozen --no-dev --no-editable \
+        $( [ "$(uname -m)" = "s390x" ] && echo "--extra s390x --no-install-package cryptography" )
+
+
+FROM registry.access.redhat.com/ubi9-minimal
+ARG VERSION
+LABEL org.opencontainers.image.authors="Laurent GRATEAU <laurent.grateau@fr.ibm.com>"
+LABEL name="IBM ODM Decision MCP Server"
+LABEL vendor="IBM"
+LABEL description="The Decision MCP Server exposes the REST APIs of IBM ODM Decision Server runtime\
+ enabling to execute decisions (aka rulesets)"
+LABEL summary="The Decision MCP Server enables to execute IBM ODM decisions (aka rulesets)"
+LABEL version=${VERSION}
+LABEL product-version=${VERSION}
+LABEL product-id="IBM Operational Decision Manager Server runtime MCP server"
+LABEL io.openshift.tags="odm,dba,dbamc"
+LABEL io.k8s.description="MCP Server enabling to execute IBM ODM decisions (aka rulesets)"
+LABEL io.k8s.display-name="ODM Decision MCP Server"
+
+RUN useradd -m worker
+USER worker
+
+WORKDIR /app
+COPY --from=builder --chown=worker:worker /python /python
+COPY --from=builder --chown=worker:worker /app/ /app/
+
+ENV PATH="/app/.venv/bin:$PATH"
+ENV TRANSPORT=streamable-http
+ENV VERIFY_SSL=True
+ENV VERIFY_SSL_HOSTNAME=True
+ENV LOG_LEVEL=INFO
+ENV TRACE_ENABLE=True
+ENV TRACE_MAXSIZE=200
+ENV TRACES_DIR=/home/worker/traces
+
+ENTRYPOINT ["ibm-odm-decision-mcp-server"]
+CMD []
+EXPOSE 3000

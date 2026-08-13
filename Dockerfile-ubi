@@ -1,6 +1,5 @@
-ARG PYTHON_VERSION=3.14
-
 FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+ARG PYTHON_VERSION=3.14
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/python
@@ -31,4 +30,5 @@ COPY --from=builder --chown=worker:worker /app/ /app/
 ENV PATH="/app/.venv/bin:$PATH"
 
 ENTRYPOINT ["ibm-odm-decision-mcp-server"]
-CMD ["--transport", "streamable-http", "--url", "http://odm:9060/res"]
+CMD []
+EXPOSE 3000

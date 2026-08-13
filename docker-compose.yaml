@@ -26,13 +26,13 @@ services:
     restart: "no"
   
   ibm-odm-decision-mcp-server:
+    image: ibm-odm-decision-mcp-server:latest
     build:
       context: .
       dockerfile: Dockerfile
       args:
         BUILDKIT_INLINE_CACHE: 0
       no_cache: true
-    image: ibm-odm-decision-mcp-server:latest
     container_name: ibm-odm-decision-mcp-server
     depends_on:
       odm:
@@ -41,26 +41,29 @@ services:
       - 3001:3000
     secrets:
       - odm_password
+    environment:
+      - TRANSPORT=streamable-http
+      - LOG_LEVEL=INFO
+      - TRACE_ENABLE=True
+      - TRACE_MAXSIZE=200
+      - TRACES_DIR=/home/worker/traces
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         exec ibm-odm-decision-mcp-server \
-          --transport streamable-http \
           --url http://odm:9060/res \
           --username resDeployer \
-          --password "$(cat /run/secrets/odm_password)" \
-          --trace-enable True \
-          --traces-dir /home/worker/traces
+          --password "$(cat /run/secrets/odm_password)"
     profiles: [ibm-odm-decision-mcp-server]
 
   ibm-odm-decision-mcp-server-ubi:
+    image: ibm-odm-decision-mcp-server-ubi:latest
     build:
       context: .
       dockerfile: Dockerfile-ubi
       args:
         BUILDKIT_INLINE_CACHE: 0
       no_cache: true
-    image: ibm-odm-decision-mcp-server-ubi:latest
     container_name: ibm-odm-decision-mcp-server-ubi
     depends_on:
       odm:
@@ -69,16 +72,21 @@ services:
       - 3001:3000
     secrets:
       - odm_password
+    environment:
+      - TRANSPORT=streamable-http
+      - VERIFY_SSL=True
+      - VERIFY_SSL_HOSTNAME=True
+      - LOG_LEVEL=INFO
+      - TRACE_ENABLE=True
+      - TRACE_MAXSIZE=200
+      - TRACES_DIR=/home/worker/traces
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         exec ibm-odm-decision-mcp-server \
-          --transport streamable-http \
           --url http://odm:9060/res \
           --username resDeployer \
-          --password "$(cat /run/secrets/odm_password)" \
-          --trace-enable True \
-          --traces-dir /home/worker/traces
+          --password "$(cat /run/secrets/odm_password)"
     profiles: [ibm-odm-decision-mcp-server-ubi]
 
 secrets:

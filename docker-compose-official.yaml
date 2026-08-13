@@ -1,0 +1,15 @@
+services:
+  mcp:
+    image: $REPOSITORY/$IMAGE:$TAG
+    build:
+      context: .
+      dockerfile: Dockerfile-official
+      platforms:
+        - "linux/amd64"
+        - "linux/arm64"
+        - "linux/ppc64le"
+        - "linux/s390x"
+      args:
+        BUILDKIT_INLINE_CACHE: 0
+        VERSION: $VERSION
+      no_cache: true
