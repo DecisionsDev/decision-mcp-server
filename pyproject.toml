@@ -4,7 +4,7 @@ version = "0.9.0"
 description = "An MCP Server enabling integration with IBM Decision Server Runtime to retrieve and invoke decision services."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [ "mcp>=1.28.1,<2.0.0","requests","pyyaml","jsonref","validator_collection","PyJWT>=2.13.0","cryptography>=48.0.1","starlette>=1.3.1","python-multipart>=0.0.30"]
+dependencies = [ "mcp>=2.0.0,<3","requests","pyyaml","jsonref","validator_collection","PyJWT>=2.13.0","cryptography>=48.0.1","starlette>=1.3.1","python-multipart>=0.0.30"]
 [[project.authors]]
 name = "laurent grateau"
 email = "laurent.grateau@fr.ibm.com"
