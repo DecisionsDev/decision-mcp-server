@@ -244,7 +244,8 @@ def parse_arguments():
     parser.add_argument("--client-secret",      "--client_secret",      type=str, default=os.getenv("CLIENT_SECRET"), help="OpenID Client Secret (optional)")
     parser.add_argument("--token-url",          "--token_url",          type=str, default=os.getenv("TOKEN_URL"), help="OpenID Connect token endpoint URL (optional)")
     parser.add_argument("--scope",                                      type=str, default=os.getenv("SCOPE", "openid"), help="OpenID Connect scope using when requesting an access token using Client Credentials (optional)")
-    parser.add_argument("--verifyssl",                                  type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Disable SSL check. Default is True (SSL verification enabled).")
+    parser.add_argument("--verifyssl",          "--verify-ssl",         type=str, default=os.getenv("VERIFY_SSL", "True"), choices=["True", "False"], help="Enable SSL check. Default is True (SSL verification enabled (to check that the server certificate is valid and trusted)).")
+    parser.add_argument("--verifyssl-hostname", "--verify-ssl-hostname",type=str, default=os.getenv("VERIFY_SSL_HOSTNAME", "False"), choices=["True", "False"], help="Enable TLS hostname verification. Default is False (TLS hostname verification disabled for compatibility). The TLS hostname verification ensures the MCP server connects to the intended server, not a malicious interceptor by checking if the domain name in the requested URL exactly matches the Common Name (CN) or Subject Alternative Name (SAN) fields in the server’s digital certificate.")
     parser.add_argument("--ssl-cert-path",      "--ssl_cert_path",      type=str, default=os.getenv("SSL_CERT_PATH"), help="Path to the SSL certificate file. If not provided, defaults to system certificates.")
     parser.add_argument("--pkjwt-cert-path",    "--pkjwt_cert_path",    type=str, default=os.getenv("PKJWT_CERT_PATH"), help="Path to the certificate for PKJWT authentication (mandatory for PKJWT).")
     parser.add_argument("--pkjwt-key-path",     "--pkjwt_key_path",     type=str, default=os.getenv("PKJWT_KEY_PATH"),  help="Path to the private key for PKJWT authentication (mandatory for PKJWT).")
@@ -277,6 +278,7 @@ def create_credentials(args):
 
     def create_credentials(args, auth_type, url):
         verifyssl = args.verifyssl != "False"
+        verifyssl_hostname = args.verifyssl_hostname != "False"
 
         if (args.zenapikey and (auth_type is None or auth_type == "ZEN")):    # If zenapikey is provided, use it for authentication, unless another authentication type is specified
             return Credentials(
@@ -285,7 +287,8 @@ def create_credentials(args):
                 zenapikey=args.zenapikey,
                 mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
                 ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
+                verify_ssl=verifyssl,
+                verify_ssl_hostname=verifyssl_hostname,
             )
         elif (args.client_secret and (auth_type is None or auth_type == "SECRET")):  # OpenID Client Secret provided
             return Credentials(
@@ -296,7 +299,8 @@ def create_credentials(args):
                 client_secret=args.client_secret,
                 mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
                 ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
+                verify_ssl=verifyssl,
+                verify_ssl_hostname=verifyssl_hostname,
             )
         elif (args.pkjwt_key_path and (auth_type is None or auth_type == "PKJWT")):  # OpenID PKJWT
             return Credentials(
@@ -307,14 +311,16 @@ def create_credentials(args):
                 pkjwt_cert_path=args.pkjwt_cert_path, pkjwt_key_path=args.pkjwt_key_path, pkjwt_key_password=args.pkjwt_key_password,
                 mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
                 ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
+                verify_ssl=verifyssl,
+                verify_ssl_hostname=verifyssl_hostname,
             )
         elif (args.mtls_key_path and auth_type and auth_type == "NONE"):  # mTLS without authentication
             return Credentials(
                 odm_url=url,
                 mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
                 ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
+                verify_ssl=verifyssl,
+                verify_ssl_hostname=verifyssl_hostname,
             )
         else:  # Default to basic authentication
             if not args.username or not args.password:
@@ -325,7 +331,8 @@ def create_credentials(args):
                 password=args.password,
                 mtls_cert_path=args.mtls_cert_path, mtls_key_path=args.mtls_key_path, mtls_key_password=args.mtls_key_password,
                 ssl_cert_path=args.ssl_cert_path,
-                verify_ssl=verifyssl
+                verify_ssl=verifyssl,
+                verify_ssl_hostname=verifyssl_hostname,
             )
 
     if args.runtime_url is not None:

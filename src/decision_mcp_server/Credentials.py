@@ -29,17 +29,19 @@ class CustomHTTPAdapter(HTTPAdapter):
     """
     A class that modifies the default behaviour with regards to certificates in order to
         - accept self-signed certificates
-        - skip hostname verification
+        - skip hostname verification (optionally)
     """
-    def __init__(self, certfile=None):
+    def __init__(self, certfile=None, verify_ssl_hostname=True):
          self.certfile = certfile
+         self.verify_ssl_hostname = verify_ssl_hostname
          HTTPAdapter.__init__(self)
          
     def init_poolmanager(self, *args, **kwargs):
         context = ssl.create_default_context(cafile = self.certfile)
         context.verify_flags = ssl.VERIFY_ALLOW_PROXY_CERTS | ssl.VERIFY_X509_TRUSTED_FIRST | ssl.VERIFY_X509_PARTIAL_CHAIN
         kwargs['ssl_context'] = context
-        kwargs['assert_hostname'] = False
+        if not self.verify_ssl_hostname:
+            kwargs['assert_hostname'] = False
         return super().init_poolmanager(*args, **kwargs)
 
 class Credentials:
@@ -98,7 +100,7 @@ class Credentials:
                  pkjwt_cert_path=None, pkjwt_key_path=None, pkjwt_key_password=None, 
                  username=None, password=None, 
                  zenapikey=None, 
-                 verify_ssl=True, ssl_cert_path=None, 
+                 verify_ssl=True, verify_ssl_hostname=True, ssl_cert_path=None, 
                  mtls_cert_path=None, mtls_key_path=None, mtls_key_password=None, 
                  debug=False):
 
@@ -123,6 +125,7 @@ class Credentials:
         self.client_secret = client_secret
         self.zenapikey = zenapikey
         self.verify_ssl = verify_ssl
+        self.verify_ssl_hostname = verify_ssl_hostname
         self.ssl_cert_path = ssl_cert_path
         self.debug = debug
 
@@ -298,7 +301,7 @@ class Credentials:
         self.logger.info("Verify SSL: " + str(self.verify_ssl))
         if self.odm_url.startswith('https') and self.verify_ssl:
             session.verify = True
-            session.mount('https://', CustomHTTPAdapter(certfile = self.ssl_cert_path))
+            session.mount('https://', CustomHTTPAdapter(certfile = self.ssl_cert_path, verify_ssl_hostname = self.verify_ssl_hostname))
         else:
             import urllib3
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

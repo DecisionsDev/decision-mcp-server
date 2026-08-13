@@ -180,19 +180,27 @@ Read more in [Creating and managing service accounts](https://www.ibm.com/docs/e
 
 ### 4. Secure connection
 
-#### 4.1. Server certificate
+#### 4.1. Server certificate checks
 
-To establish a SSL/TLS secure connection to the server, the Decision MCP server must have access to the certificate used to sign the server certificate.
+When establishing a SSL/TLS secure connection, the Decision MCP server can perform two checks:
+1. verify that the server certificate is valid and trusted
+    - this check is enabled by default
+    - and can be disabled in dev/test environments by setting
+      - **CLI:** `--verifyssl "False"`
+      - **Env:** `VERIFY_SSL="False"`
+    - this check requires that:
+      - either the server certificate was signed with a public CA certificate available in the system trusted certificates
+      - or this signing certificate is provided to the MCP server using:
+        - **CLI:** `--ssl-cert-path <certificate_filename>`
+        - **Env:** `SSL_CERT_PATH=<certificate_filename>`
+      - use this latter option to solve the error `certificate verify failed: self-signed certificate in certificate chain`
+      - if needed you can concat several certificates in the same file 
 
-If a public CA certificate was used to sign the server certificate, the Decision MCP server can find it among the system trusted certificates.
-
-If this is a self-signed certificate, it can be specified :
-  - **CLI:** `--ssl-cert-path <certificate_filename>`
-  - **Env:** `SSL_CERT_PATH=<certificate_filename>`
-
-Alternatively, in dev/test environments, the authenticity of the server can be ignored:
-  - **CLI:** `--verifyssl "False"`
-  - **Env:** `VERIFY_SSL="False"`
+1. verify that the MCP server connects to the intended server and not a malicious interceptor by checking that the Common Name (CN) or Subject Alternative Name (SAN) fields in the server certificate matches the domain name in the requested URL
+    - this check is disabled by default (for compatibility)
+    - and can be enabled by setting
+      - **CLI:** `--verifyssl-hostname "True"`
+      - **Env:** `VERIFY_SSL_HOSTNAME="True"`
 
 #### 4.2. mTLS (mutual TLS)
 
@@ -224,7 +232,8 @@ The parameters below can be specified:
 | `--pkjwt-key-password` | `PKJWT_KEY_PASSWORD` | Password to decrypt the private key for PKJWT authentication. Only needed if the key is password-protected. |                               |
 | `--token-url`     | `TOKEN_URL`         | OpenID Connect token endpoint URL for authentication                                                    |                                         |
 | `--scope`         | `SCOPE`             | OpenID Connect scope used when requesting an access token using Client Credentials for authentication   | `openid`                                |
-| `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates (`True` or `False`)                                                  | `True`                                  |
+| `--verifyssl`     | `VERIFY_SSL`        | Whether to verify SSL certificates are valid and trusted (`True` or `False`)                            | `True`                                  |
+| `--verifyssl-hostname` | `VERIFY_SSL_HOSTNAME` | Whether to verify that the MCP server is connecting to the intended server by checking that the Common Name (CN) or Subject Alternative Name (SAN) fields of the server certificate matches the domain name in the requested URL  (`True` or `False`) | `False`                                  |
 | `--ssl-cert-path` | `SSL_CERT_PATH`     | Path to the SSL certificate file. If not provided, defaults to system certificates.                     |                                         |
 | `--mtls-cert-path`| `MTLS_CERT_PATH`    | Path to the SSL certificate file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
 | `--mtls-key-path` | `MTLS_KEY_PATH`     | Path to the SSL private key file of the client for mutual TLS authentication (mandatory for mTLS)       |                                         |
@@ -266,11 +275,12 @@ The example below shows a typical use-case where the sensitive information (here
         "git+https://github.com/DecisionsDev/ibm-odm-decision-mcp-server",
         "start",
         "--url", "https://odm-res-console-url",
+        "--verifyssl-hostname", "True",
         "--ssl-cert-path", "certificate-file",
         "--username", "your-username"
       ],
       "env": {
-        "ODM_PASSWORD": "odmAdmin"
+        "ODM_PASSWORD": "your-password"
       }
     }
   }
@@ -308,6 +318,7 @@ For production deployments on the Cloud Pak, use the Zen API Key.
   "git+https://github.com/DecisionsDev/ibm-odm-decision-mcp-server",
   "start",
   "--url",           "https://odm-res-console-url",
+  "--verifyssl-hostname", "True",
   "--ssl-cert-path", "certificate-file",
   "--username",      "YOUR_ZENUSERNAME"
 ],
@@ -333,6 +344,7 @@ Two authentication variants are possible:
   "start",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
+  "--verifyssl-hostname", "True",
   "--ssl-cert-path", "certificate-file",
   "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
@@ -351,6 +363,7 @@ Two authentication variants are possible:
   "start",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
+  "--verifyssl-hostname", "True",
   "--ssl-cert-path", "certificate-file",
   "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
@@ -376,6 +389,7 @@ When authorization is required (to assess the right to access to the service (RE
   "start",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
+  "--verifyssl-hostname", "True",
   "--ssl-cert-path", "certificate-file",
   "--username",      "SERVICE_ACCOUNT"
 ],
@@ -400,6 +414,7 @@ The example below shows how to configure the Decision MCP Server when:
   "start",
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
+  "--verifyssl-hostname", "True",
   "--ssl-cert-path", "certificate-file",
 
   "--console-auth-type", "PKJWT",

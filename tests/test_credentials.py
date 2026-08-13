@@ -22,8 +22,8 @@ import pytest
 import responses
 import json
 import requests  # Add this line to import the requests module
-from unittest.mock import patch, Mock
-from decision_mcp_server.Credentials import Credentials, CustomHTTPAdapter
+from unittest.mock import patch
+from decision_mcp_server.Credentials import Credentials
 
 def get_test_credentials():
     return Credentials(
@@ -770,6 +770,7 @@ def test_ssl_cert_path():
             username="user",
             password="pass",
             verify_ssl=True,
+            verify_ssl_hostname=True,
             ssl_cert_path="/path/to/custom/cert"
         )
         
@@ -777,6 +778,39 @@ def test_ssl_cert_path():
         cred.get_session()
         
         # Verify adapter was created with the correct cert path
-        mock_adapter_class.assert_called_with(certfile="/path/to/custom/cert")
+        mock_adapter_class.assert_called_with(certfile="/path/to/custom/cert", verify_ssl_hostname=True)
+
+def test_ssl_cert_path_used_for_token_request():
+    """When ssl_cert_path is provided, self.cacert must point to it so that
+    the OpenID token POST uses the custom CA bundle, not the certifi default."""
+    cred = Credentials(
+        odm_url="https://localhost:9060/res",
+        username="user",
+        password="pass",
+        verify_ssl=True,
+        ssl_cert_path="/path/to/selfsigned.pem"
+    )
+    assert cred.cacert == "/path/to/selfsigned.pem"
+
+def test_ssl_no_cert_path_falls_back_to_certifi():
+    """When ssl_cert_path is not provided, self.cacert should be the certifi bundle."""
+    import certifi
+    cred = Credentials(
+        odm_url="https://localhost:9060/res",
+        username="user",
+        password="pass",
+        verify_ssl=True,
+    )
+    assert cred.cacert == certifi.where()
+
+def test_ssl_verify_false_sets_cacert_none():
+    """When verify_ssl is False, self.cacert should be None."""
+    cred = Credentials(
+        odm_url="https://localhost:9060/res",
+        username="user",
+        password="pass",
+        verify_ssl=False,
+    )
+    assert cred.cacert is None
 
 # Made with Bob
