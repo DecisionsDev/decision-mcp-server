@@ -49,6 +49,7 @@ USER worker
 WORKDIR /app
 COPY --from=builder --chown=worker:worker /python /python
 COPY --from=builder --chown=worker:worker /app/ /app/
+COPY                --chown=worker:worker /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV TRANSPORT=streamable-http
