@@ -1,2 +1,51 @@
 #!/usr/bin/env bash
-CURL_OPTS='-s -o /dev/null -w "%{http_code}\n" | grep -q "200"' server_discover.sh
+curl ${CURL_OPTS} \
+    -H "mcp-method: server/discover" \
+    -H "mcp-protocol-version: 2026-07-28" \
+    -H "Accept: application/json,text/event-stream" \
+    -H "Content-Type: application/json" \
+    http://localhost:${PORT}${MOUNT_PATH} \
+    -d '{
+  "jsonrpc": "2.0",
+  "id": "server-discover-probe-1",
+  "method": "server/discover",
+  "params": {
+    "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientInfo": {
+        "name": "mcp-inspector",
+        "version": "0.0.0"
+      },
+      "io.modelcontextprotocol/clientCapabilities": {
+        "sampling": {},
+        "elicitation": {
+          "form": {},
+          "url": {}
+        },
+        "roots": {
+          "listChanged": true
+        },
+        "tasks": {
+          "list": {},
+          "cancel": {},
+          "requests": {
+            "sampling": {
+              "createMessage": {}
+            },
+            "elicitation": {
+              "create": {}
+            }
+          }
+        },
+        "extensions": {
+          "io.modelcontextprotocol/tasks": {},
+          "io.modelcontextprotocol/ui": {
+            "mimeTypes": [
+              "text/html;profile=mcp-app"
+            ]
+          }
+        }
+      }
+    }
+  }
+}'

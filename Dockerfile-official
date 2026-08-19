@@ -53,8 +53,10 @@ COPY                --chown=worker:worker /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV TRANSPORT=streamable-http
+ENV PORT=3000
+ENV MOUNT_PATH=/mcp
 ENV VERIFY_SSL=True
-ENV VERIFY_SSL_HOSTNAME=True
+ENV VERIFY_SSL_HOSTNAME=False
 ENV LOG_LEVEL=INFO
 ENV TRACE_ENABLE=True
 ENV TRACE_MAXSIZE=200
