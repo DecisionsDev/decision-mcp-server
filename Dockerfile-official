@@ -43,12 +43,21 @@ LABEL io.openshift.tags="odm,dba,dbamc"
 LABEL io.k8s.description="MCP Server enabling to execute IBM ODM decisions (aka rulesets)"
 LABEL io.k8s.display-name="ODM Decision MCP Server"
 
-RUN useradd -m worker
-USER worker
+USER root
+
+RUN set -ex; \
+    microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
+    microdnf clean all --disableplugin=subscription-manager; \
+    rm -rf /var/cache/yum; \
+    groupadd --system --gid 501 mcp; \
+    useradd  --system --uid 501 --gid 501 --shell /sbin/nologin mcp
+
+USER 501
 
 WORKDIR /app
-COPY --from=builder --chown=worker:worker /python /python
-COPY --from=builder --chown=worker:worker /app/ /app/
+COPY --from=builder --chown=501:501 /python /python
+COPY --from=builder --chown=501:501 /app/ /app/
+COPY                --chown=501:501 /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV TRANSPORT=streamable-http
@@ -57,7 +66,7 @@ ENV VERIFY_SSL_HOSTNAME=True
 ENV LOG_LEVEL=INFO
 ENV TRACE_ENABLE=True
 ENV TRACE_MAXSIZE=200
-ENV TRACES_DIR=/home/worker/traces
+ENV TRACES_DIR=/tmp
 
 ENTRYPOINT ["ibm-odm-decision-mcp-server"]
 CMD []
