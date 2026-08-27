@@ -47,10 +47,13 @@ USER root
 
 RUN set -ex; \
     microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
+    microdnf install -y crypto-policies crypto-policies-scripts openssl ; \
     microdnf clean all --disableplugin=subscription-manager; \
     rm -rf /var/cache/yum; \
     groupadd --system --gid 501 mcp; \
-    useradd  --system --uid 501 --gid 501 --shell /sbin/nologin mcp
+    useradd  --system --uid 501 --gid 501 --shell /sbin/nologin mcp; \
+    fips-mode-setup --enable; \
+    echo "# FIPS module installation complete" >/etc/system-fips; 
 
 USER 501
 
