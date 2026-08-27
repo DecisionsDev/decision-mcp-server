@@ -280,11 +280,14 @@ class DecisionServerManager:
             else:
                 self.logger.error("Request failed with status code: %s", response.status_code)
                 self.logger.error("Response: %s", response.text)
+                raise ToolError(f"Unexpected response {response.status_code} from {self.console_credentials.odm_url}/api/v1/ruleapps")
 
         except requests.exceptions.RequestException as e:
             self.logger.error("An error occurred: %s", e)
+            raise ToolError(f"Unexpected response {str(e)} while fetching {self.console_credentials.odm_url}/api/v1/ruleapps")
         except json.JSONDecodeError:
             self.logger.error("Failed to decode JSON response.")
+            raise ToolError(f"Failed to decode the JSON response from {self.console_credentials.odm_url}/api/v1/ruleapps")
         finally:
             self.console_credentials.cleanup()
 
