@@ -15,7 +15,7 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 # - java-11-openjdk-headless  for keytool (truststore certificate extraction)
 RUN set -ex; \
     microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
-    microdnf -y install tar gzip python3-cryptography java-11-openjdk-headless curl; \
+    microdnf -y install tar gzip python3-cryptography java-11-openjdk-headless; \
     sh /uv-installer.sh; \
     uv python install ${PYTHON_VERSION}
 
