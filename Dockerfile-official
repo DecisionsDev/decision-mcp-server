@@ -23,12 +23,12 @@ RUN set -ex; \
 RUN set -ex; \
     curl -fsSL https://github.com/DecisionsDev/odm-ondocker/raw/refs/heads/master/common/security/truststore.jks \
         -o /tmp/truststore.jks; \
-    mkdir -p /mcp-certs/ibm; \
+    mkdir -p /mcp-certs/trusted-odm-default; \
     for alias in $(keytool -list -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" -noprompt \
             | awk -F',' '/trustedCertEntry/{print $1}' | tr -d ' '); do \
         keytool -exportcert -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" \
             -alias "${alias}" -rfc -noprompt \
-            -file "/mcp-certs/ibm/${alias}.pem"; \
+            -file "/mcp-certs/trusted-odm-default/${alias}.pem"; \
     done
 
 WORKDIR /app
@@ -74,7 +74,7 @@ USER 501
 WORKDIR /app
 COPY --from=builder --chown=501:501 /python /python
 COPY --from=builder --chown=501:501 /app/ /app/
-COPY --from=builder --chown=501:501 /mcp-certs/ibm/ /mcp-certs/ibm/
+COPY --from=builder --chown=501:501 /mcp-certs/trusted-odm-default/ /mcp-certs/trusted-odm-default/
 COPY                --chown=501:501 /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
