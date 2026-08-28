@@ -27,6 +27,7 @@ from decision_mcp_server.Credentials import Credentials
 from decision_mcp_server.DecisionServerManager import DecisionServerManager
 from decision_mcp_server.config import INSTRUCTIONS, BASE_DIR
 from decision_mcp_server.ExecutionToolTrace import ExecutionToolTrace, DiskTraceStorage
+from decision_mcp_server.utils.ssl_utils import merge_ssl_cert_paths
 import argparse
 import os
 import sys
@@ -342,6 +343,10 @@ def create_credentials(args):
         # replace 'res' with 'DecisionService'
         if odm_url_runtime.endswith('res'):
             odm_url_runtime=odm_url_runtime[:-3] + 'DecisionService'
+
+    # Resolve a comma/semicolon-separated list of cert paths into a single file
+    if args.ssl_cert_path:
+        args.ssl_cert_path = merge_ssl_cert_paths(args.ssl_cert_path)
 
     console_credentials = create_credentials(args, args.console_auth_type, args.url)
     runtime_credentials = create_credentials(args, args.runtime_auth_type, odm_url_runtime)

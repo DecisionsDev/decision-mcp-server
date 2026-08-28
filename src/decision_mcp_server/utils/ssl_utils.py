@@ -12,42 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ssl
-import socket
-import certifi
-import OpenSSL
-from urllib.parse import urlparse
+import re
+import tempfile
 
-def extract_certificate_from_url(url: str, output_path: str = None) -> str:
-    """
-    Extract SSL certificate from a URL and optionally save it to a PEM file
-    
+def merge_ssl_cert_paths(ssl_cert_path: str) -> str:
+    """Return a path to a single CA-bundle PEM file.
+
+    If *ssl_cert_path* contains multiple file paths separated by ``,`` or
+    ``;``, the files are concatenated into a new temporary file and the
+    path of that temporary file is returned.  When only a single path is
+    given the original value is returned unchanged.
+
+    Non-existent paths are silently skipped with a warning log message.
+
     Args:
-        url (str): The HTTPS URL to extract the certificate from
-        output_path (str, optional): Path to save the PEM file. If None, returns the PEM content as string
-        
-    Returns:
-        str: PEM certificate content
-    """
-    # Parse URL to get hostname
-    parsed_url = urlparse(url)
-    hostname = parsed_url.hostname
-    port = parsed_url.port or 443
+        ssl_cert_path: One or more PEM file paths, separated by ``,`` or ``;``.
 
-    # Create SSL context using system's trusted certificates
-    context = ssl.create_default_context(cafile=certifi.where())
-    
-    try:
-        with socket.create_connection((hostname, port)) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                cert_bin = ssock.getpeercert(binary_form=True)
-                x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_ASN1, cert_bin)
-                pem_data = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, x509).decode('utf-8')
-                
-                if output_path:
-                    with open(output_path, 'w') as f:
-                        f.write(pem_data)
-                
-                return pem_data
-    except Exception as e:
-        raise Exception(f"Failed to extract certificate from {url}: {str(e)}")
+    Returns:
+        A file path suitable for use as a CA bundle.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Split on commas or semicolons, stripping whitespace around each entry.
+    paths = [p.strip() for p in re.split(r'[,;]+', ssl_cert_path) if p.strip()]
+
+    if len(paths) <= 1:
+        # Single path — return as-is (no temp file required).
+        return ssl_cert_path
+
+    # Multiple paths: concatenate into a NamedTemporaryFile that persists until
+    # the process exits (delete=False).
+    with tempfile.NamedTemporaryFile(
+        mode='w',
+        suffix='.pem',
+        delete=False,
+        prefix='odm_merged_ca_',
+    ) as tmp:
+        merged = []
+        for path in paths:
+            try:
+                with open(path, 'r') as f:
+                    content = f.read()
+            except FileNotFoundError:
+                logger.warning("ssl-cert-path: file not found, skipping: %s", path)
+                continue
+            # Ensure each certificate block ends with a newline before the next.
+            if not content.endswith('\n'):
+                content += '\n'
+            tmp.write(content)
+            merged.append(path)
+        logger.debug(
+            "ssl-cert-path: concatenated %s into %s",
+            ", ".join(merged),
+            tmp.name,
+        )
+        return tmp.name
