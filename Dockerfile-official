@@ -1,5 +1,6 @@
 FROM registry.access.redhat.com/ubi9-minimal AS builder
 ARG PYTHON_VERSION=3.14
+ARG TRUSTSTORE_PWD
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_INSTALL_DIR=/python
@@ -11,11 +12,24 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 # required packages:
 # - tar gzip                for uv-installer
 # - python3-cryptography    cryptography python library (not available as binary on s390x otherwise)
+# - java-11-openjdk-headless  for keytool (truststore certificate extraction)
 RUN set -ex; \
     microdnf -y upgrade --disableplugin=subscription-manager --setopt=install_weak_deps=0; \
-    microdnf -y install tar gzip python3-cryptography; \
+    microdnf -y install tar gzip python3-cryptography java-11-openjdk-headless curl; \
     sh /uv-installer.sh; \
     uv python install ${PYTHON_VERSION}
+
+# Download the ODM truststore and extract each certificate as a PEM file
+RUN set -ex; \
+    curl -fsSL https://github.com/DecisionsDev/odm-ondocker/raw/refs/heads/master/common/security/truststore.jks \
+        -o /tmp/truststore.jks; \
+    mkdir -p /mcp-certs/ibm; \
+    for alias in $(keytool -list -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" -noprompt \
+            | awk -F',' '/trustedCertEntry/{print $1}' | tr -d ' '); do \
+        keytool -exportcert -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" \
+            -alias "${alias}" -rfc -noprompt \
+            -file "/mcp-certs/ibm/${alias}.pem"; \
+    done
 
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -60,6 +74,7 @@ USER 501
 WORKDIR /app
 COPY --from=builder --chown=501:501 /python /python
 COPY --from=builder --chown=501:501 /app/ /app/
+COPY --from=builder --chown=501:501 /mcp-certs/ibm/ /mcp-certs/ibm/
 COPY                --chown=501:501 /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
