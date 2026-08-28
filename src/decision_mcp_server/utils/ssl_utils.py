@@ -43,12 +43,21 @@ def merge_ssl_cert_paths(ssl_cert_path: str) -> str:
 
     # Multiple paths: concatenate into a NamedTemporaryFile that persists until
     # the process exits (delete=False).
-    with tempfile.NamedTemporaryFile(
-        mode='w',
-        suffix='.pem',
-        delete=False,
-        prefix='odm_merged_ca_',
-    ) as tmp:
+    try:
+        tmp = tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix='.pem',
+            delete=False,
+            prefix='odm_merged_ca_',
+        )
+    except OSError as e:
+        logger.warning(
+            "ssl-cert-path: could not create temporary file (%s), returning original value. Set TMPDIR env to mitigate.",
+            e,
+        )
+        return ssl_cert_path
+
+    with tmp:
         merged = []
         for path in paths:
             try:
@@ -60,7 +69,14 @@ def merge_ssl_cert_paths(ssl_cert_path: str) -> str:
             # Ensure each certificate block ends with a newline before the next.
             if not content.endswith('\n'):
                 content += '\n'
-            tmp.write(content)
+            try:
+                tmp.write(content)
+            except OSError as e:
+                logger.warning(
+                    "ssl-cert-path: could not write to temporary file (%s), returning original value. Set TMPDIR env to mitigate.",
+                    e,
+                )
+                return ssl_cert_path
             merged.append(path)
         logger.debug(
             "ssl-cert-path: concatenated %s into %s",
