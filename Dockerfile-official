@@ -19,17 +19,19 @@ RUN set -ex; \
     sh /uv-installer.sh; \
     uv python install ${PYTHON_VERSION}
 
-# Download the ODM truststore and extract each certificate as a PEM file
+# Download the ODM truststore and extract each certificate as a PEM file,
+# then concatenate them all into a single tls.crt bundle
 RUN set -ex; \
     curl -fsSL https://github.com/DecisionsDev/odm-ondocker/raw/refs/heads/master/common/security/truststore.jks \
         -o /tmp/truststore.jks; \
-    mkdir -p /mcp-certs/trusted-odm-default; \
+    mkdir -p /mcp-certs/trusted-odm; \
     for alias in $(keytool -list -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" -noprompt \
             | awk -F',' '/trustedCertEntry/{print $1}' | tr -d ' '); do \
         keytool -exportcert -keystore /tmp/truststore.jks -storepass "${TRUSTSTORE_PWD}" \
             -alias "${alias}" -rfc -noprompt \
-            -file "/mcp-certs/trusted-odm-default/${alias}.pem"; \
-    done
+            -file "/mcp-certs/trusted-odm/${alias}.pem"; \
+    done; \
+    cat /mcp-certs/trusted-odm/*.pem > /mcp-certs/trusted-odm/tls.crt
 
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -74,7 +76,7 @@ USER 501
 WORKDIR /app
 COPY --from=builder --chown=501:501 /python /python
 COPY --from=builder --chown=501:501 /app/ /app/
-COPY --from=builder --chown=501:501 /mcp-certs/trusted-odm-default/ /mcp-certs/trusted-odm-default/
+COPY --from=builder --chown=501:501 /mcp-certs/trusted-odm/tls.crt /mcp-certs/trusted-odm/tls.crt
 COPY                --chown=501:501 /container/script /script
 
 ENV PATH="/app/.venv/bin:$PATH"
