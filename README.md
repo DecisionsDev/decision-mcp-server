@@ -347,7 +347,7 @@ Two authentication variants are possible:
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
   "--verifyssl-hostname", "True",
-  "--ssl-cert-path", "certificate-file",
+  "--ssl-cert-path", "odm-certificate-file;openid-provider-certificate-file",
   "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
 ],
@@ -366,7 +366,7 @@ Two authentication variants are possible:
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
   "--verifyssl-hostname", "True",
-  "--ssl-cert-path", "certificate-file",
+  "--ssl-cert-path", "odm-certificate-file;openid-provider-certificate-file",
   "--token-url",     "https://your-openid-connect_provider-token-endpoint-url",
   "--scope",         "the_scope_to_be_used_for_client_credentials"
 ],
@@ -417,7 +417,7 @@ The example below shows how to configure the Decision MCP Server when:
   "--url",           "https://odm-res-console-url",
   "--runtime-url",   "https://odm-runtime-url",
   "--verifyssl-hostname", "True",
-  "--ssl-cert-path", "certificate-file",
+  "--ssl-cert-path", "odm-certificate-file;openid-provider-certificate-file",
 
   "--console-auth-type", "PKJWT",
   "--token-url",         "https://your-openid-connect_provider-token-endpoint-url",
