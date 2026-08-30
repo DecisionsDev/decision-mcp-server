@@ -183,15 +183,11 @@ class TestMergedFileProperties:
         assert "-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----" in content
         os.unlink(result)
 
-    def test_missing_file_is_skipped(self, tmp_path):
-        """A non-existent path in the list is silently skipped."""
+    def test_missing_file_raises(self, tmp_path):
+        """A non-existent path in the list causes the application to stop."""
         f_a = tmp_path / "a.pem"
         f_a.write_text(CERT_A)
         missing = "/nonexistent/path/ca.pem"
 
-        result = merge_ssl_cert_paths(f"{f_a},{missing}")
-
-        assert os.path.isfile(result)
-        content = open(result).read()
-        assert CERT_A in content
-        os.unlink(result)
+        with pytest.raises(FileNotFoundError):
+            merge_ssl_cert_paths(f"{f_a},{missing}")
