@@ -51,11 +51,11 @@ def merge_ssl_cert_paths(ssl_cert_path: str) -> str:
             prefix='odm_merged_ca_',
         )
     except OSError as e:
-        logger.warning(
-            "ssl-cert-path: could not create temporary file (%s), returning original value. Set TMPDIR env to mitigate.",
+        logger.error(
+            "ssl-cert-path: could not create temporary file (%s), stopping. Set TMPDIR env to mitigate",
             e,
         )
-        return ssl_cert_path
+        raise e
 
     with tmp:
         merged = []
@@ -63,20 +63,20 @@ def merge_ssl_cert_paths(ssl_cert_path: str) -> str:
             try:
                 with open(path, 'r') as f:
                     content = f.read()
-            except FileNotFoundError:
-                logger.warning("ssl-cert-path: file not found, skipping: %s", path)
-                continue
+            except FileNotFoundError as e:
+                logger.error("ssl-cert-path: file %s not found, stopping", path)
+                raise e
             # Ensure each certificate block ends with a newline before the next.
             if not content.endswith('\n'):
                 content += '\n'
             try:
                 tmp.write(content)
             except OSError as e:
-                logger.warning(
-                    "ssl-cert-path: could not write to temporary file (%s), returning original value. Set TMPDIR env to mitigate.",
+                logger.error(
+                    "ssl-cert-path: could not write to temporary file (%s), stopping. Set TMPDIR env to mitigate",
                     e,
                 )
-                return ssl_cert_path
+                raise e
             merged.append(path)
         logger.debug(
             "ssl-cert-path: concatenated %s into %s",
