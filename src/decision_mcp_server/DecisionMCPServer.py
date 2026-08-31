@@ -87,7 +87,6 @@ class DecisionMCPServer:
                     mtls_key_path=runtime_credentials.mtls_key_path,
                     mtls_key_password=runtime_credentials.mtls_key_password,
                 )
-                self.logger.info("Dedicated runtime created: %s", dedicated_url)
             self.dedicated_runtime_credentials[path_prefix] = _url_to_credentials[dedicated_url]
             self.logger.info("Dedicated runtime registered: %s -> %s", path_prefix, dedicated_url)
 
@@ -325,7 +324,7 @@ def parse_arguments():
         "--dedicated-runtimes", "--dedicated_runtimes",
         type=_dedicated_runtime_pair,
         nargs='+',
-        default=[],
+        default=[_dedicated_runtime_pair(item) for item in (os.getenv("DEDICATED_RUNTIMES") or "").split()],
         metavar="PATH=URL",
         help="Map specific ruleset paths to dedicated runtime servers. "
              "Provide one or more PATH=URL pairs (e.g. --dedicated-runtimes /myapp/1.0/myruleset/1.0=http://runtime2:9060/DecisionService). "

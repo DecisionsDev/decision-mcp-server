@@ -103,7 +103,7 @@ class TestParseArgumentsDedicatedRuntimes:
         assert args.dedicated_runtimes == [("/app/1.0/r/1.0", "http://rt:9060/DecisionService")]
 
     def test_default_is_empty_list(self):
-        with patch("sys.argv", ["script"]):
+        with patch("sys.argv", ["script"]), patch.dict("os.environ", {}, clear=True):
             args = parse_arguments()
         assert args.dedicated_runtimes == []
 
